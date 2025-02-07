@@ -1,0 +1,43 @@
+policies:
+  - name: read-foobar-bucket
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:GetObject"
+            ],
+            "Resource": [
+              "arn:aws:s3:::foobar/*"
+            ]
+          }
+        ]
+      }
+  - name: admin-reports-bucket
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "*"
+            ],
+            "Resource": [
+              "arn:aws:s3:::admin-reports/*"
+            ]
+          }
+        ]
+      }
+users:
+  - accessKey: iamenabled
+    secretKey: mypasswordisnice
+    status: enabled
+    policies: [read-foobar-bucket]
+  - accessKey: iamdisabled
+    secretKey: mypasswordisawesome
+    status: disabled
+  - accessKey: iamprettysureiamenabled
+    secretKey: mypasswordisnice
