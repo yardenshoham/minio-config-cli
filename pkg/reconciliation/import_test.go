@@ -10,35 +10,37 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	miniotestcontainer "github.com/testcontainers/testcontainers-go/modules/minio"
 )
 
 func TestImport(t *testing.T) {
+	t.Parallel()
 	// create minio container
 	ctx := context.Background()
 	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-02-03T21-03-04Z")
 	defer func() {
 		err := testcontainers.TerminateContainer(minioContainer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	endpoint, err := minioContainer.ConnectionString(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	creds := credentials.NewStaticV4("minioadmin", "minioadmin", "")
 	madminClient, err := madmin.NewWithOptions(endpoint, &madmin.Options{
 		Secure: false,
 		Creds:  creds,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	minioClient, err := minio.New(endpoint, &minio.Options{
 		Secure: false,
 		Creds:  creds,
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	// actual test
@@ -86,50 +88,50 @@ func TestImport(t *testing.T) {
 	}
 
 	users, err := madminClient.ListUsers(ctx)
-	assert.NoError(t, err)
-	assert.Len(t, users, 0)
+	require.NoError(t, err)
+	assert.Empty(t, users)
 
 	policies, err := madminClient.ListCannedPolicies(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	builtinPinnedPoliciesAmount := len(policies)
 
 	buckets, err := minioClient.ListBuckets(ctx)
-	assert.NoError(t, err)
-	assert.Len(t, buckets, 0)
+	require.NoError(t, err)
+	assert.Empty(t, buckets)
 
 	// dry run should not change anything
-	err = Import(logger, ctx, true, madminClient, minioClient, ImportConfig)
-	assert.NoError(t, err)
+	err = Import(ctx, logger, true, madminClient, minioClient, ImportConfig)
+	require.NoError(t, err)
 
 	users, err = madminClient.ListUsers(ctx)
-	assert.NoError(t, err)
-	assert.Len(t, users, 0)
+	require.NoError(t, err)
+	assert.Empty(t, users)
 
 	policies, err = madminClient.ListCannedPolicies(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, policies, builtinPinnedPoliciesAmount)
 
 	buckets, err = minioClient.ListBuckets(ctx)
-	assert.NoError(t, err)
-	assert.Len(t, buckets, 0)
+	require.NoError(t, err)
+	assert.Empty(t, buckets)
 
 	// twice to check idempotency
-	for i := 0; i < 2; i++ {
-		err = Import(logger, ctx, false, madminClient, minioClient, ImportConfig)
-		assert.NoError(t, err)
+	for range 2 {
+		err = Import(ctx, logger, false, madminClient, minioClient, ImportConfig)
+		require.NoError(t, err)
 
 		buckets, err = minioClient.ListBuckets(ctx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, buckets, len(bucketsToImport))
 		assert.Equal(t, bucketsToImport[0].Name, buckets[0].Name)
 
 		policies, err = madminClient.ListCannedPolicies(ctx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, policies, builtinPinnedPoliciesAmount+len(policiesToImport))
 		assert.Contains(t, policies, readFoobarBucketPolicyName)
 
 		users, err = madminClient.ListUsers(ctx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, users, len(usersToImport))
 		assert.Contains(t, users, "first")
 		assert.Contains(t, users, "second")
@@ -139,11 +141,11 @@ func TestImport(t *testing.T) {
 	}
 
 	testdataConfigFile, err := os.Open("../../testdata/config.yaml")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer testdataConfigFile.Close()
 
 	testdataConfig, err := LoadConfig(testdataConfigFile)
-	assert.NoError(t, err)
-	err = Import(logger, ctx, false, madminClient, minioClient, *testdataConfig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	err = Import(ctx, logger, false, madminClient, minioClient, *testdataConfig)
+	require.NoError(t, err)
 }

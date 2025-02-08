@@ -4,13 +4,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateConfig(t *testing.T) {
+	t.Parallel()
 	file, err := os.Open("../../testdata/config.yaml")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer file.Close()
 	err = ValidateConfig(file)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

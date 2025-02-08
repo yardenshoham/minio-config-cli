@@ -22,7 +22,7 @@ func newImportCmd() *cobra.Command {
 		Short:   "Import configuration from the specified files",
 		Example: "minio-config-cli import http://localhost:9000 minioadmin minioadmin --import-file-location=config.yaml",
 		Args:    cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			url, err := url.Parse(args[0])
 			if err != nil {
 				return fmt.Errorf("failed to parse minio url: %w", err)
@@ -59,7 +59,7 @@ func newImportCmd() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to load config from file %s: %w", importFileLocation, err)
 				}
-				err = reconciliation.Import(logger.With("file", importFileLocation), ctx, dryRun, madminClient, minioClient, *config)
+				err = reconciliation.Import(ctx, logger.With("file", importFileLocation), dryRun, madminClient, minioClient, *config)
 				if err != nil {
 					return fmt.Errorf("failed to import from file %s: %w", importFileLocation, err)
 				}

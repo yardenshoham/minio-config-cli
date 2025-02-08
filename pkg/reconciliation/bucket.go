@@ -12,7 +12,7 @@ type bucket struct {
 	Name string `yaml:"name"`
 }
 
-func importBuckets(logger *slog.Logger, ctx context.Context, dryRun bool, client *minio.Client, buckets []bucket) error {
+func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, client *minio.Client, buckets []bucket) error {
 	logger.Info("importing buckets", "amount", len(buckets))
 	for _, bucket := range buckets {
 		exists, err := client.BucketExists(ctx, bucket.Name)

@@ -13,7 +13,7 @@ import (
 //go:embed schema.json
 var schema []byte
 
-// validator a compiled JSON schema validator
+// validator a compiled JSON schema validator.
 var validator *jsonschema.Schema
 
 func init() {

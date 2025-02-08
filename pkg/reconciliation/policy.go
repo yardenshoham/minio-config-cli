@@ -13,7 +13,7 @@ type policy struct {
 	Policy string `yaml:"policy"`
 }
 
-func importPolicies(logger *slog.Logger, ctx context.Context, dryRun bool, client *madmin.AdminClient, policies []policy) error {
+func importPolicies(ctx context.Context, logger *slog.Logger, dryRun bool, client *madmin.AdminClient, policies []policy) error {
 	logger.Info("importing policies", "amount", len(policies))
 	for _, policy := range policies {
 		logger.Info("importing policy", "name", policy.Name)

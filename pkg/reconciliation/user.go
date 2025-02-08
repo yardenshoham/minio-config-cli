@@ -19,7 +19,7 @@ type user struct {
 	Status madmin.AccountStatus `yaml:"status"`
 }
 
-func importUsers(logger *slog.Logger, ctx context.Context, dryRun bool, client *madmin.AdminClient, users []user) error {
+func importUsers(ctx context.Context, logger *slog.Logger, dryRun bool, client *madmin.AdminClient, users []user) error {
 	logger.Info("importing users", "amount", len(users))
 	for _, user := range users {
 		setUserPayload := madmin.AddOrUpdateUserReq{
@@ -43,7 +43,7 @@ func importUsers(logger *slog.Logger, ctx context.Context, dryRun bool, client *
 			logger.Info("imported user", "accessKey", user.AccessKey)
 		}
 		if len(user.Policies) > 0 {
-			err := attachUserPolicies(logger, ctx, dryRun, client, user)
+			err := attachUserPolicies(ctx, logger, dryRun, client, user)
 			if err != nil {
 				return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
 			}
@@ -52,7 +52,7 @@ func importUsers(logger *slog.Logger, ctx context.Context, dryRun bool, client *
 	return nil
 }
 
-func attachUserPolicies(logger *slog.Logger, ctx context.Context, dryRun bool, client *madmin.AdminClient, user user) error {
+func attachUserPolicies(ctx context.Context, logger *slog.Logger, dryRun bool, client *madmin.AdminClient, user user) error {
 	policyEntities, err := client.GetPolicyEntities(ctx, madmin.PolicyEntitiesQuery{
 		Users:  []string{user.AccessKey},
 		Policy: user.Policies,
