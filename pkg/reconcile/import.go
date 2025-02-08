@@ -1,6 +1,7 @@
 package reconcile
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7"
+	"github.com/yardenshoham/minio-config-cli/pkg/validation"
 	"gopkg.in/yaml.v3"
 )
 
@@ -18,8 +20,17 @@ type ImportConfig struct {
 }
 
 func LoadConfig(r io.Reader) (*ImportConfig, error) {
+	var b bytes.Buffer
+	_, err := io.Copy(&b, r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config: %w", err)
+	}
+	err = validation.ValidateConfig(bytes.NewReader(b.Bytes()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate config: %w", err)
+	}
 	config := &ImportConfig{}
-	err := yaml.NewDecoder(r).Decode(config)
+	err = yaml.Unmarshal(b.Bytes(), config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}

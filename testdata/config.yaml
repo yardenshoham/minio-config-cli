@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/pkg/validation/schema.json
 policies:
   - name: read-foobar-bucket
     policy: |

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/schema.json",
+  "$id": "https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/pkg/validation/schema.json",
   "type": "object",
   "properties": {
     "users": {
