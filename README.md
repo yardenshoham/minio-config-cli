@@ -5,6 +5,9 @@ for a server based on a JSON/YAML file. Store and handle the configuration files
 inside git just like normal code. A MinIO restart isn't required to apply the
 configuration.
 
+Inspired by
+[keycloak-config-cli](https://github.com/adorsys/keycloak-config-cli).
+
 # Usage
 
 ```bash
