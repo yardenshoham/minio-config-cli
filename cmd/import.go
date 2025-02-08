@@ -24,7 +24,7 @@ func newImportCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			url, err := url.Parse(args[0])
 			if err != nil {
-				return fmt.Errorf("failed to parse minio url: %v", err)
+				return fmt.Errorf("failed to parse minio url: %w", err)
 			}
 			secure := url.Scheme == "https"
 			creds := credentials.NewStaticV4(args[1], args[2], "")
@@ -37,23 +37,23 @@ func newImportCmd() *cobra.Command {
 				Secure: secure,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to create madmin client: %v", err)
+				return fmt.Errorf("failed to create madmin client: %w", err)
 			}
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 			ctx := context.Background()
 			for _, importFileLocation := range importFileLocations {
 				file, err := os.Open(importFileLocation)
 				if err != nil {
-					return fmt.Errorf("failed to open file %s: %v", importFileLocation, err)
+					return fmt.Errorf("failed to open file %s: %w", importFileLocation, err)
 				}
 				defer file.Close()
 				config, err := reconcile.LoadConfig(file)
 				if err != nil {
-					return fmt.Errorf("failed to load config from file %s: %v", importFileLocation, err)
+					return fmt.Errorf("failed to load config from file %s: %w", importFileLocation, err)
 				}
 				err = reconcile.Import(logger.With("file", importFileLocation), ctx, madminClient, minioClient, *config)
 				if err != nil {
-					return fmt.Errorf("failed to import from file %s: %v", importFileLocation, err)
+					return fmt.Errorf("failed to import from file %s: %w", importFileLocation, err)
 				}
 			}
 			return nil

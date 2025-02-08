@@ -37,13 +37,13 @@ func importUsers(logger *slog.Logger, ctx context.Context, client *madmin.AdminC
 		// so we will do it after the user is created
 		err := client.SetUserReq(ctx, user.AccessKey, setUserPayload)
 		if err != nil {
-			return fmt.Errorf("failed to set user %s: %v", user.AccessKey, err)
+			return fmt.Errorf("failed to set user %s: %w", user.AccessKey, err)
 		}
 		logger.Info("imported user", "accessKey", user.AccessKey)
 		if len(user.Policies) > 0 {
 			err = attachUserPolicies(logger, ctx, client, user)
 			if err != nil {
-				return fmt.Errorf("failed to attach policies to user %s: %v", user.AccessKey, err)
+				return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
 			}
 		}
 	}
@@ -56,7 +56,7 @@ func attachUserPolicies(logger *slog.Logger, ctx context.Context, client *madmin
 		Policy: user.Policies,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get policy entities for user %s: %v", user.AccessKey, err)
+		return fmt.Errorf("failed to get policy entities for user %s: %w", user.AccessKey, err)
 	}
 	policiesToAttachMap := make(map[string]struct{}, len(user.Policies))
 	for _, policy := range user.Policies {
@@ -85,7 +85,7 @@ func attachUserPolicies(logger *slog.Logger, ctx context.Context, client *madmin
 		User:     user.AccessKey,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to attach policies to user %s: %v", user.AccessKey, err)
+		return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
 	}
 	logger.Info("attached policies to user", "accessKey", user.AccessKey, "policies", policyAssociationResp.PoliciesAttached)
 	return nil

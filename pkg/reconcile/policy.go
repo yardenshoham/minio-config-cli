@@ -19,7 +19,7 @@ func importPolicies(logger *slog.Logger, ctx context.Context, client *madmin.Adm
 		logger.Info("importing policy", "name", policy.Name)
 		err := client.AddCannedPolicy(ctx, policy.Name, []byte(policy.Policy))
 		if err != nil {
-			return fmt.Errorf("failed to import policy %s: %v", policy.Name, err)
+			return fmt.Errorf("failed to import policy %s: %w", policy.Name, err)
 		}
 		logger.Info("imported policy", "name", policy.Name)
 	}

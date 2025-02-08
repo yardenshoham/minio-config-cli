@@ -17,7 +17,7 @@ func importBuckets(logger *slog.Logger, ctx context.Context, client *minio.Clien
 	for _, bucket := range buckets {
 		exists, err := client.BucketExists(ctx, bucket.Name)
 		if err != nil {
-			return fmt.Errorf("failed to check if bucket %s exists: %v", bucket.Name, err)
+			return fmt.Errorf("failed to check if bucket %s exists: %w", bucket.Name, err)
 		}
 		if exists {
 			logger.Info("bucket already exists", "name", bucket.Name)
@@ -26,7 +26,7 @@ func importBuckets(logger *slog.Logger, ctx context.Context, client *minio.Clien
 		logger.Info("importing bucket", "name", bucket.Name)
 		err = client.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{})
 		if err != nil {
-			return fmt.Errorf("failed to import bucket %s: %v", bucket.Name, err)
+			return fmt.Errorf("failed to import bucket %s: %w", bucket.Name, err)
 		}
 	}
 	return nil
