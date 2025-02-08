@@ -29,11 +29,21 @@ archives:
 
 changelog:
   sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
 
 dockers:
   - image_templates:
       - "yardenshoham/{{.ProjectName}}"
+      - "yardenshoham/{{.ProjectName}}:v{{ .Version }}"
+      - "yardenshoham/{{.ProjectName}}:{{ .ShortCommit }}"
+    use: buildx
+    build_flag_templates:
+      - "--label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/README.md"
+      - '--label=io.artifacthub.package.maintainers=[{"name":"Yarden Shoham","email":"minio-config-cli@yardenshoham.com"}]'
+      - "--label=io.artifacthub.package.license=Apache-2.0"
+      - "--label=org.opencontainers.image.description=Configuration as Code for MinIO"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
