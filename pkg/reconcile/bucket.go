@@ -1,0 +1,33 @@
+package reconcile
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+
+	"github.com/minio/minio-go/v7"
+)
+
+type bucket struct {
+	Name string `yaml:"name"`
+}
+
+func importBuckets(logger *slog.Logger, ctx context.Context, client *minio.Client, buckets []bucket) error {
+	logger.Info("importing buckets", "amount", len(buckets))
+	for _, bucket := range buckets {
+		exists, err := client.BucketExists(ctx, bucket.Name)
+		if err != nil {
+			return fmt.Errorf("failed to check if bucket %s exists: %v", bucket.Name, err)
+		}
+		if exists {
+			logger.Info("bucket already exists", "name", bucket.Name)
+			continue
+		}
+		logger.Info("importing bucket", "name", bucket.Name)
+		err = client.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to import bucket %s: %v", bucket.Name, err)
+		}
+	}
+	return nil
+}

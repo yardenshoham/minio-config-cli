@@ -8,10 +8,10 @@ import (
 	"os"
 
 	"github.com/minio/madmin-go/v3"
+	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/spf13/cobra"
 	"github.com/yardenshoham/minio-config-cli/pkg/reconcile"
-	"gopkg.in/yaml.v3"
 )
 
 func newImportCmd() *cobra.Command {
@@ -26,9 +26,15 @@ func newImportCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to parse minio url: %v", err)
 			}
+			secure := url.Scheme == "https"
+			creds := credentials.NewStaticV4(args[1], args[2], "")
 			madminClient, err := madmin.NewWithOptions(url.Host, &madmin.Options{
-				Secure: url.Scheme == "https",
-				Creds:  credentials.NewStaticV4(args[1], args[2], ""),
+				Secure: secure,
+				Creds:  creds,
+			})
+			minioClient, err := minio.New(url.Host, &minio.Options{
+				Creds:  creds,
+				Secure: secure,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create madmin client: %v", err)
@@ -41,12 +47,11 @@ func newImportCmd() *cobra.Command {
 					return fmt.Errorf("failed to open file %s: %v", importFileLocation, err)
 				}
 				defer file.Close()
-				var config reconcile.ImportConfig
-				err = yaml.NewDecoder(file).Decode(&config)
+				config, err := reconcile.LoadConfig(file)
 				if err != nil {
-					return fmt.Errorf("failed to decode file %s: %v", importFileLocation, err)
+					return fmt.Errorf("failed to load config from file %s: %v", importFileLocation, err)
 				}
-				err = reconcile.Import(logger.With("file", importFileLocation), ctx, madminClient, config)
+				err = reconcile.Import(logger.With("file", importFileLocation), ctx, madminClient, minioClient, *config)
 				if err != nil {
 					return fmt.Errorf("failed to import from file %s: %v", importFileLocation, err)
 				}

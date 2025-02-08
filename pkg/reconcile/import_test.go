@@ -7,34 +7,41 @@ import (
 	"testing"
 
 	"github.com/minio/madmin-go/v3"
+	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/minio"
+	miniotestcontainer "github.com/testcontainers/testcontainers-go/modules/minio"
 )
 
 func TestImport(t *testing.T) {
 	// create minio container
 	ctx := context.Background()
-	minioContainer, err := minio.Run(ctx, "minio/minio:RELEASE.2025-02-03T21-03-04Z")
+	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-02-03T21-03-04Z")
 	defer func() {
 		err := testcontainers.TerminateContainer(minioContainer)
 		assert.NoError(t, err)
 	}()
 	assert.NoError(t, err)
 
-	url, err := minioContainer.ConnectionString(ctx)
+	endpoint, err := minioContainer.ConnectionString(ctx)
 	assert.NoError(t, err)
 
-	client, err := madmin.NewWithOptions(url, &madmin.Options{
+	creds := credentials.NewStaticV4("minioadmin", "minioadmin", "")
+	madminClient, err := madmin.NewWithOptions(endpoint, &madmin.Options{
 		Secure: false,
-		Creds:  credentials.NewStaticV4("minioadmin", "minioadmin", ""),
+		Creds:  creds,
 	})
 	assert.NoError(t, err)
 
-	const readFoobarBucketPolicyName = "read-foobar-bucket"
+	minioClient, err := minio.New(endpoint, &minio.Options{
+		Secure: false,
+		Creds:  creds,
+	})
+	assert.NoError(t, err)
 
 	// actual test
+	const readFoobarBucketPolicyName = "read-foobar-bucket"
 	policiesToImport := []policy{
 		{
 			Name: readFoobarBucketPolicyName,
@@ -66,32 +73,50 @@ func TestImport(t *testing.T) {
 			Status:    madmin.AccountDisabled,
 		},
 	}
+	bucketsToImport := []bucket{
+		{
+			Name: "foobar",
+		},
+	}
 	ImportConfig := ImportConfig{
 		Users:    usersToImport,
 		Policies: policiesToImport,
+		Buckets:  bucketsToImport,
 	}
-	users, err := client.ListUsers(ctx)
+	users, err := madminClient.ListUsers(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, users, 0)
 
-	policies, err := client.ListCannedPolicies(ctx)
+	policies, err := madminClient.ListCannedPolicies(ctx)
 	assert.NoError(t, err)
 	builtinPinnedPoliciesAmount := len(policies)
 
-	err = Import(slog.New(slog.NewTextHandler(os.Stdout, nil)), ctx, client, ImportConfig)
+	buckets, err := minioClient.ListBuckets(ctx)
 	assert.NoError(t, err)
+	assert.Len(t, buckets, 0)
 
-	policies, err = client.ListCannedPolicies(ctx)
-	assert.NoError(t, err)
-	assert.Len(t, policies, builtinPinnedPoliciesAmount+len(policiesToImport))
-	assert.Contains(t, policies, readFoobarBucketPolicyName)
+	// twice to check idempotency
+	for i := 0; i < 2; i++ {
+		err = Import(slog.New(slog.NewTextHandler(os.Stdout, nil)), ctx, madminClient, minioClient, ImportConfig)
+		assert.NoError(t, err)
 
-	users, err = client.ListUsers(ctx)
-	assert.NoError(t, err)
-	assert.Len(t, users, len(usersToImport))
-	assert.Contains(t, users, "first")
-	assert.Contains(t, users, "second")
-	assert.Equal(t, madmin.AccountEnabled, users["first"].Status)
-	assert.Equal(t, madmin.AccountDisabled, users["second"].Status)
-	assert.Equal(t, readFoobarBucketPolicyName, users["first"].PolicyName)
+		buckets, err = minioClient.ListBuckets(ctx)
+		assert.NoError(t, err)
+		assert.Len(t, buckets, len(bucketsToImport))
+		assert.Equal(t, bucketsToImport[0].Name, buckets[0].Name)
+
+		policies, err = madminClient.ListCannedPolicies(ctx)
+		assert.NoError(t, err)
+		assert.Len(t, policies, builtinPinnedPoliciesAmount+len(policiesToImport))
+		assert.Contains(t, policies, readFoobarBucketPolicyName)
+
+		users, err = madminClient.ListUsers(ctx)
+		assert.NoError(t, err)
+		assert.Len(t, users, len(usersToImport))
+		assert.Contains(t, users, "first")
+		assert.Contains(t, users, "second")
+		assert.Equal(t, madmin.AccountEnabled, users["first"].Status)
+		assert.Equal(t, madmin.AccountDisabled, users["second"].Status)
+		assert.Equal(t, readFoobarBucketPolicyName, users["first"].PolicyName)
+	}
 }

@@ -13,8 +13,10 @@ type user struct {
 	SecretKey string `yaml:"secretKey,omitempty"`
 
 	// Policies is an list of policy names to be applied for the user.
-	Policies []string             `yaml:"policies,omitempty"`
-	Status   madmin.AccountStatus `yaml:"status"`
+	Policies []string `yaml:"policies,omitempty"`
+
+	// Status is either enabled or disabled, if not set it will be enabled.
+	Status madmin.AccountStatus `yaml:"status"`
 }
 
 func importUsers(logger *slog.Logger, ctx context.Context, client *madmin.AdminClient, users []user) error {
@@ -39,16 +41,52 @@ func importUsers(logger *slog.Logger, ctx context.Context, client *madmin.AdminC
 		}
 		logger.Info("imported user", "accessKey", user.AccessKey)
 		if len(user.Policies) > 0 {
-			logger.Info("attaching policies to user", "accessKey", user.AccessKey, "policies", user.Policies)
-			policyAssociationResp, err := client.AttachPolicy(ctx, madmin.PolicyAssociationReq{
-				Policies: user.Policies,
-				User:     user.AccessKey,
-			})
+			err = attachUserPolicies(logger, ctx, client, user)
 			if err != nil {
 				return fmt.Errorf("failed to attach policies to user %s: %v", user.AccessKey, err)
 			}
-			logger.Info("attached policies to user", "accessKey", user.AccessKey, "policies", policyAssociationResp.PoliciesAttached)
 		}
 	}
+	return nil
+}
+
+func attachUserPolicies(logger *slog.Logger, ctx context.Context, client *madmin.AdminClient, user user) error {
+	policyEntities, err := client.GetPolicyEntities(ctx, madmin.PolicyEntitiesQuery{
+		Users:  []string{user.AccessKey},
+		Policy: user.Policies,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get policy entities for user %s: %v", user.AccessKey, err)
+	}
+	policiesToAttachMap := make(map[string]struct{}, len(user.Policies))
+	for _, policy := range user.Policies {
+		policiesToAttachMap[policy] = struct{}{}
+	}
+	for _, policyUserMapping := range policyEntities.UserMappings {
+		if policyUserMapping.User != user.AccessKey {
+			panic("queried user's " + user.AccessKey + " policies but got user " + policyUserMapping.User)
+		}
+		for _, attachedPolicy := range policyUserMapping.Policies {
+			logger.Info("user %s already has policy %s attached", user.AccessKey, attachedPolicy)
+			delete(policiesToAttachMap, attachedPolicy)
+		}
+	}
+	if len(policiesToAttachMap) == 0 {
+		logger.Info("no policies left to attach", "accessKey", user.AccessKey, "policies", user.Policies)
+		return nil
+	}
+	policiesToAttach := make([]string, 0, len(policiesToAttachMap))
+	for policy := range policiesToAttachMap {
+		policiesToAttach = append(policiesToAttach, policy)
+	}
+	logger.Info("attaching policies to user", "accessKey", user.AccessKey, "policies", policiesToAttach)
+	policyAssociationResp, err := client.AttachPolicy(ctx, madmin.PolicyAssociationReq{
+		Policies: policiesToAttach,
+		User:     user.AccessKey,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to attach policies to user %s: %v", user.AccessKey, err)
+	}
+	logger.Info("attached policies to user", "accessKey", user.AccessKey, "policies", policyAssociationResp.PoliciesAttached)
 	return nil
 }

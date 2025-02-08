@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../schema.json
 policies:
   - name: read-foobar-bucket
     policy: |
@@ -40,4 +41,6 @@ users:
     secretKey: mypasswordisawesome
     status: disabled
   - accessKey: iamprettysureiamenabled
-    secretKey: mypasswordisnice
+    secretKey: mypasswordisnicemypasswordisnicemypasswordisnice
+buckets:
+  - name: foobar
