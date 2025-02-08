@@ -32,12 +32,15 @@ func newImportCmd() *cobra.Command {
 				Secure: secure,
 				Creds:  creds,
 			})
+			if err != nil {
+				return fmt.Errorf("failed to create madmin client: %w", err)
+			}
 			minioClient, err := minio.New(url.Host, &minio.Options{
 				Creds:  creds,
 				Secure: secure,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to create madmin client: %w", err)
+				return fmt.Errorf("failed to create minio client: %w", err)
 			}
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 			ctx := context.Background()

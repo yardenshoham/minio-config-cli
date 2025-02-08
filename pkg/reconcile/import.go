@@ -37,6 +37,7 @@ func LoadConfig(r io.Reader) (*ImportConfig, error) {
 	return config, nil
 }
 
+// Import imports the all resources from the config into the MinIO server. It is idempotent.
 func Import(logger *slog.Logger, ctx context.Context, madminClient *madmin.AdminClient, minioClient *minio.Client, config ImportConfig) error {
 	err := importPolicies(logger, ctx, madminClient, config.Policies)
 	if err != nil {

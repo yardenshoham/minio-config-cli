@@ -40,6 +40,7 @@ func TestImport(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	// actual test
 	const readFoobarBucketPolicyName = "read-foobar-bucket"
 	policiesToImport := []policy{
@@ -97,7 +98,7 @@ func TestImport(t *testing.T) {
 
 	// twice to check idempotency
 	for i := 0; i < 2; i++ {
-		err = Import(slog.New(slog.NewTextHandler(os.Stdout, nil)), ctx, madminClient, minioClient, ImportConfig)
+		err = Import(logger, ctx, madminClient, minioClient, ImportConfig)
 		assert.NoError(t, err)
 
 		buckets, err = minioClient.ListBuckets(ctx)
@@ -119,4 +120,13 @@ func TestImport(t *testing.T) {
 		assert.Equal(t, madmin.AccountDisabled, users["second"].Status)
 		assert.Equal(t, readFoobarBucketPolicyName, users["first"].PolicyName)
 	}
+
+	testdataConfigFile, err := os.Open("../../testdata/config.yaml")
+	assert.NoError(t, err)
+	defer testdataConfigFile.Close()
+
+	testdataConfig, err := LoadConfig(testdataConfigFile)
+	assert.NoError(t, err)
+	err = Import(logger, ctx, madminClient, minioClient, *testdataConfig)
+	assert.NoError(t, err)
 }
