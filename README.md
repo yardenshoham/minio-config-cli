@@ -132,7 +132,7 @@ Available docker tags
 ```shell script
 docker run \
     -v <your config path>:/config \
-    yardenshoham/minio-config-cli:latest import http://localhost:9000 minioadmin minioadmin \
+    yardenshoham/minio-config-cli:latest import http://host.docker.internal:9000 minioadmin minioadmin \
         --import-file-location=/config/*
 ```
 
