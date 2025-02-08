@@ -12,7 +12,7 @@ type bucket struct {
 	Name string `yaml:"name"`
 }
 
-func importBuckets(logger *slog.Logger, ctx context.Context, client *minio.Client, buckets []bucket) error {
+func importBuckets(logger *slog.Logger, ctx context.Context, dryRun bool, client *minio.Client, buckets []bucket) error {
 	logger.Info("importing buckets", "amount", len(buckets))
 	for _, bucket := range buckets {
 		exists, err := client.BucketExists(ctx, bucket.Name)
@@ -24,9 +24,12 @@ func importBuckets(logger *slog.Logger, ctx context.Context, client *minio.Clien
 			continue
 		}
 		logger.Info("importing bucket", "name", bucket.Name)
-		err = client.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to import bucket %s: %w", bucket.Name, err)
+		if !dryRun {
+			err = client.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to import bucket %s: %w", bucket.Name, err)
+			}
+			logger.Info("imported bucket", "name", bucket.Name)
 		}
 	}
 	return nil

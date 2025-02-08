@@ -19,7 +19,7 @@ type user struct {
 	Status madmin.AccountStatus `yaml:"status"`
 }
 
-func importUsers(logger *slog.Logger, ctx context.Context, client *madmin.AdminClient, users []user) error {
+func importUsers(logger *slog.Logger, ctx context.Context, dryRun bool, client *madmin.AdminClient, users []user) error {
 	logger.Info("importing users", "amount", len(users))
 	for _, user := range users {
 		setUserPayload := madmin.AddOrUpdateUserReq{
@@ -32,16 +32,18 @@ func importUsers(logger *slog.Logger, ctx context.Context, client *madmin.AdminC
 		}
 		logger.Info("importing user", "accessKey", user.AccessKey, "status", setUserPayload.Status)
 
-		// we can't attach the policies in SetUserReq because of
-		// https://github.com/minio/madmin-go/issues/216
-		// so we will do it after the user is created
-		err := client.SetUserReq(ctx, user.AccessKey, setUserPayload)
-		if err != nil {
-			return fmt.Errorf("failed to set user %s: %w", user.AccessKey, err)
+		if !dryRun {
+			// we can't attach the policies in SetUserReq because of
+			// https://github.com/minio/madmin-go/issues/216
+			// so we will do it after the user is created
+			err := client.SetUserReq(ctx, user.AccessKey, setUserPayload)
+			if err != nil {
+				return fmt.Errorf("failed to set user %s: %w", user.AccessKey, err)
+			}
+			logger.Info("imported user", "accessKey", user.AccessKey)
 		}
-		logger.Info("imported user", "accessKey", user.AccessKey)
 		if len(user.Policies) > 0 {
-			err = attachUserPolicies(logger, ctx, client, user)
+			err := attachUserPolicies(logger, ctx, dryRun, client, user)
 			if err != nil {
 				return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
 			}
@@ -50,7 +52,7 @@ func importUsers(logger *slog.Logger, ctx context.Context, client *madmin.AdminC
 	return nil
 }
 
-func attachUserPolicies(logger *slog.Logger, ctx context.Context, client *madmin.AdminClient, user user) error {
+func attachUserPolicies(logger *slog.Logger, ctx context.Context, dryRun bool, client *madmin.AdminClient, user user) error {
 	policyEntities, err := client.GetPolicyEntities(ctx, madmin.PolicyEntitiesQuery{
 		Users:  []string{user.AccessKey},
 		Policy: user.Policies,
@@ -80,13 +82,15 @@ func attachUserPolicies(logger *slog.Logger, ctx context.Context, client *madmin
 		policiesToAttach = append(policiesToAttach, policy)
 	}
 	logger.Info("attaching policies to user", "accessKey", user.AccessKey, "policies", policiesToAttach)
-	policyAssociationResp, err := client.AttachPolicy(ctx, madmin.PolicyAssociationReq{
-		Policies: policiesToAttach,
-		User:     user.AccessKey,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
+	if !dryRun {
+		policyAssociationResp, err := client.AttachPolicy(ctx, madmin.PolicyAssociationReq{
+			Policies: policiesToAttach,
+			User:     user.AccessKey,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
+		}
+		logger.Info("attached policies to user", "accessKey", user.AccessKey, "policies", policyAssociationResp.PoliciesAttached)
 	}
-	logger.Info("attached policies to user", "accessKey", user.AccessKey, "policies", policyAssociationResp.PoliciesAttached)
 	return nil
 }

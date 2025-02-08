@@ -98,7 +98,7 @@ func TestImport(t *testing.T) {
 
 	// twice to check idempotency
 	for i := 0; i < 2; i++ {
-		err = Import(logger, ctx, madminClient, minioClient, ImportConfig)
+		err = Import(logger, ctx, false, madminClient, minioClient, ImportConfig)
 		assert.NoError(t, err)
 
 		buckets, err = minioClient.ListBuckets(ctx)
@@ -127,6 +127,6 @@ func TestImport(t *testing.T) {
 
 	testdataConfig, err := LoadConfig(testdataConfigFile)
 	assert.NoError(t, err)
-	err = Import(logger, ctx, madminClient, minioClient, *testdataConfig)
+	err = Import(logger, ctx, false, madminClient, minioClient, *testdataConfig)
 	assert.NoError(t, err)
 }

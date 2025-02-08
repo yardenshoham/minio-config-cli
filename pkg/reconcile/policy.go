@@ -13,15 +13,17 @@ type policy struct {
 	Policy string `yaml:"policy"`
 }
 
-func importPolicies(logger *slog.Logger, ctx context.Context, client *madmin.AdminClient, policies []policy) error {
+func importPolicies(logger *slog.Logger, ctx context.Context, dryRun bool, client *madmin.AdminClient, policies []policy) error {
 	logger.Info("importing policies", "amount", len(policies))
 	for _, policy := range policies {
 		logger.Info("importing policy", "name", policy.Name)
-		err := client.AddCannedPolicy(ctx, policy.Name, []byte(policy.Policy))
-		if err != nil {
-			return fmt.Errorf("failed to import policy %s: %w", policy.Name, err)
+		if !dryRun {
+			err := client.AddCannedPolicy(ctx, policy.Name, []byte(policy.Policy))
+			if err != nil {
+				return fmt.Errorf("failed to import policy %s: %w", policy.Name, err)
+			}
+			logger.Info("imported policy", "name", policy.Name)
 		}
-		logger.Info("imported policy", "name", policy.Name)
 	}
 	return nil
 }

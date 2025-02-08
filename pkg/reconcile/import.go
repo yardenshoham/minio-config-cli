@@ -38,16 +38,16 @@ func LoadConfig(r io.Reader) (*ImportConfig, error) {
 }
 
 // Import imports the all resources from the config into the MinIO server. It is idempotent.
-func Import(logger *slog.Logger, ctx context.Context, madminClient *madmin.AdminClient, minioClient *minio.Client, config ImportConfig) error {
-	err := importPolicies(logger, ctx, madminClient, config.Policies)
+func Import(logger *slog.Logger, ctx context.Context, dryRun bool, madminClient *madmin.AdminClient, minioClient *minio.Client, config ImportConfig) error {
+	err := importPolicies(logger, ctx, dryRun, madminClient, config.Policies)
 	if err != nil {
 		return fmt.Errorf("failed to import policies: %w", err)
 	}
-	err = importUsers(logger, ctx, madminClient, config.Users)
+	err = importUsers(logger, ctx, dryRun, madminClient, config.Users)
 	if err != nil {
 		return fmt.Errorf("failed to import users: %w", err)
 	}
-	err = importBuckets(logger, ctx, minioClient, config.Buckets)
+	err = importBuckets(logger, ctx, dryRun, minioClient, config.Buckets)
 	if err != nil {
 		return fmt.Errorf("failed to import buckets: %w", err)
 	}

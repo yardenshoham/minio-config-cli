@@ -16,6 +16,7 @@ import (
 
 func newImportCmd() *cobra.Command {
 	var importFileLocations []string
+	var dryRun bool
 	var importCmd = &cobra.Command{
 		Use:     "import MINIO_URL ACCESS_KEY SECRET_KEY",
 		Short:   "Import configuration from the specified files",
@@ -43,6 +44,10 @@ func newImportCmd() *cobra.Command {
 				return fmt.Errorf("failed to create minio client: %w", err)
 			}
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+			if dryRun {
+				logger.Info("running in dry-run mode")
+				logger = logger.With("dry-run", "true")
+			}
 			ctx := context.Background()
 			for _, importFileLocation := range importFileLocations {
 				file, err := os.Open(importFileLocation)
@@ -54,7 +59,7 @@ func newImportCmd() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to load config from file %s: %w", importFileLocation, err)
 				}
-				err = reconcile.Import(logger.With("file", importFileLocation), ctx, madminClient, minioClient, *config)
+				err = reconcile.Import(logger.With("file", importFileLocation), ctx, dryRun, madminClient, minioClient, *config)
 				if err != nil {
 					return fmt.Errorf("failed to import from file %s: %w", importFileLocation, err)
 				}
@@ -72,5 +77,6 @@ func newImportCmd() *cobra.Command {
 	if err != nil {
 		panic(err)
 	}
+	importCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Don't actually modify resources in the MinIO server")
 	return importCmd
 }
