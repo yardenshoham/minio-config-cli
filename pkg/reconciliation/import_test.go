@@ -1,4 +1,4 @@
-package reconcile
+package reconciliation
 
 import (
 	"context"

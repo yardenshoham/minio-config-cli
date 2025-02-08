@@ -11,7 +11,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/spf13/cobra"
-	"github.com/yardenshoham/minio-config-cli/pkg/reconcile"
+	"github.com/yardenshoham/minio-config-cli/pkg/reconciliation"
 )
 
 func newImportCmd() *cobra.Command {
@@ -55,11 +55,11 @@ func newImportCmd() *cobra.Command {
 					return fmt.Errorf("failed to open file %s: %w", importFileLocation, err)
 				}
 				defer file.Close()
-				config, err := reconcile.LoadConfig(file)
+				config, err := reconciliation.LoadConfig(file)
 				if err != nil {
 					return fmt.Errorf("failed to load config from file %s: %w", importFileLocation, err)
 				}
-				err = reconcile.Import(logger.With("file", importFileLocation), ctx, dryRun, madminClient, minioClient, *config)
+				err = reconciliation.Import(logger.With("file", importFileLocation), ctx, dryRun, madminClient, minioClient, *config)
 				if err != nil {
 					return fmt.Errorf("failed to import from file %s: %w", importFileLocation, err)
 				}

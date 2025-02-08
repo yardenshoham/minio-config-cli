@@ -85,7 +85,7 @@ https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/
 # Build this project
 
 ```bash
-go build .
+go build
 ```
 
 # Run tests
