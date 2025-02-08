@@ -6,7 +6,7 @@ inside git just like normal code. A MinIO restart isn't required to apply the
 configuration.
 
 Inspired by
-[keycloak-config-cli](https://github.com/adorsys/keycloak-config-cli).
+[keycloak-config-cli](https://github.com/yardenshoham/minio-config-cli).
 
 # Usage
 
@@ -97,4 +97,49 @@ We use `testcontainers` so we test against an actual MinIO server.
 
 ```bash
 go test ./...
+```
+
+# Run this project
+
+Run a local instance of the MinIO server on port 9000:
+
+```bash
+docker run --rm -p 9000:9000 -p 9001:9001 minio/minio server /data --console-address ":9001"
+```
+
+before performing the following command:
+
+```bash
+minio-config-cli import http://localhost:9000 minioadmin minioadmin \
+    --import-file-location=./testdata/config.yaml
+```
+
+## Docker
+
+Docker images are available at
+[DockerHub](https://hub.docker.com/r/yardenshoham/minio-config-cli)
+(docker.io/yardenshoham/minio-config-cli).
+
+Available docker tags
+
+| Tag      | Description                                   |
+| -------- | --------------------------------------------- |
+| `latest` | latest available release of minio-config-cli. |
+| `va.b.c` | minio-config-cli version `a.b.c` .            |
+
+### Docker run
+
+```shell script
+docker run \
+    -v <your config path>:/config \
+    yardenshoham/minio-config-cli:latest import http://localhost:9000 minioadmin minioadmin \
+        --import-file-location=/config/*
+```
+
+### Docker build
+
+You can build an own docker image by running
+
+```shell
+go build && docker build -t minio-config-cli .
 ```
