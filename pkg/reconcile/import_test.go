@@ -84,6 +84,7 @@ func TestImport(t *testing.T) {
 		Policies: policiesToImport,
 		Buckets:  bucketsToImport,
 	}
+
 	users, err := madminClient.ListUsers(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, users, 0)
@@ -93,6 +94,22 @@ func TestImport(t *testing.T) {
 	builtinPinnedPoliciesAmount := len(policies)
 
 	buckets, err := minioClient.ListBuckets(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, buckets, 0)
+
+	// dry run should not change anything
+	err = Import(logger, ctx, true, madminClient, minioClient, ImportConfig)
+	assert.NoError(t, err)
+
+	users, err = madminClient.ListUsers(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, users, 0)
+
+	policies, err = madminClient.ListCannedPolicies(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, policies, builtinPinnedPoliciesAmount)
+
+	buckets, err = minioClient.ListBuckets(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, buckets, 0)
 
