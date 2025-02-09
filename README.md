@@ -148,6 +148,6 @@ go build && docker build -t minio-config-cli .
 
 We provide a helm chart [here](chart).
 
-Since it makes no sense to deploy keycloak-config-cli as standalone application, you could add it as dependency to your chart deployment.
+Since it makes no sense to deploy minio-config-cli as standalone application, you could add it as dependency to your chart deployment.
 
 Checkout helm docs about [chart dependencies](https://helm.sh/docs/topics/charts/#chart-dependencies)!
