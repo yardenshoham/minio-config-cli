@@ -30,6 +30,7 @@ dockers:
   - image_templates:
       - "yardenshoham/{{.ProjectName}}"
       - "yardenshoham/{{.ProjectName}}:v{{ .Version }}"
+      - "yardenshoham/{{.ProjectName}}:{{ .Version }}"
       - "yardenshoham/{{.ProjectName}}:{{ .ShortCommit }}"
     use: buildx
     build_flag_templates:

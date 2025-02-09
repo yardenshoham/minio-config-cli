@@ -143,3 +143,11 @@ You can build an own docker image by running
 ```shell
 go build && docker build -t minio-config-cli .
 ```
+
+## Helm
+
+We provide a helm chart [here](chart).
+
+Since it makes no sense to deploy keycloak-config-cli as standalone application, you could add it as dependency to your chart deployment.
+
+Checkout helm docs about [chart dependencies](https://helm.sh/docs/topics/charts/#chart-dependencies)!

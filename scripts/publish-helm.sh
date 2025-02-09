@@ -22,11 +22,14 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+# Remove 'v' prefix if present
+VERSION=${1#v}
+
 echo "Logging in to DockerHub"
 helm registry login registry-1.docker.io -u $DOCKERHUB_CHARTS_USERNAME -p $DOCKERHUB_CHARTS_TOKEN
 
 echo "Packaging helm chart"
-helm package chart --version $1 --app-version $1 --dependency-update
+helm package chart --version $VERSION --app-version $VERSION --dependency-update
 
 echo "Pushing helm chart to yardenshohamcharts repo"
-helm push minio-config-cli-$1.tgz oci://registry-1.docker.io/yardenshohamcharts
+helm push minio-config-cli-$VERSION.tgz oci://registry-1.docker.io/yardenshohamcharts

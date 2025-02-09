@@ -12,8 +12,8 @@ maintainers:
 name: minio-config-cli
 sources:
 - https://github.com/yardenshoham/minio-config-cli/tree/main/chart
-version: v0.1.0 # replaced during the release process
-appVersion: v0.1.0 # replaced during the release process
+version: 0.1.0 # replaced during the release process
+appVersion: 0.1.0 # replaced during the release process
 dependencies:
   - name: common
     version: 2.29.1
