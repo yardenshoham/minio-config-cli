@@ -1,0 +1,20 @@
+annotations:
+  category: DeveloperTools
+  licenses: Apache-2.0
+apiVersion: v2
+description: Configuration as Code for MinIO
+keywords:
+- minio
+- configuration-as-code
+maintainers:
+- name: Yarden Shoham
+  email: minio-config-cli@yardenshoham.com
+name: minio-config-cli
+sources:
+- https://github.com/yardenshoham/minio-config-cli/tree/main/chart
+version: v0.1.0 # replaced during the release process
+appVersion: v0.1.0 # replaced during the release process
+dependencies:
+  - name: common
+    version: 2.29.1
+    repository: oci://registry-1.docker.io/bitnamicharts

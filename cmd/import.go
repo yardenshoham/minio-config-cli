@@ -3,9 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7"
@@ -48,20 +50,35 @@ func newImportCmd() *cobra.Command {
 				logger.Info("running in dry-run mode")
 				logger = logger.With("dry-run", "true")
 			}
-			ctx := context.Background()
+			filePaths := []string{}
 			for _, importFileLocation := range importFileLocations {
-				file, err := os.Open(importFileLocation)
+				err := filepath.WalkDir(importFileLocation, func(path string, d fs.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+					if d.Type().IsRegular() {
+						filePaths = append(filePaths, path)
+					}
+					return nil
+				})
 				if err != nil {
-					return fmt.Errorf("failed to open file %s: %w", importFileLocation, err)
+					return fmt.Errorf("failed to walk import file locations: %w", err)
+				}
+			}
+			ctx := context.Background()
+			for _, path := range filePaths {
+				file, err := os.Open(path)
+				if err != nil {
+					return fmt.Errorf("failed to open file %s: %w", path, err)
 				}
 				defer file.Close()
 				config, err := reconciliation.LoadConfig(file)
 				if err != nil {
-					return fmt.Errorf("failed to load config from file %s: %w", importFileLocation, err)
+					return fmt.Errorf("failed to load config from file %s: %w", path, err)
 				}
-				err = reconciliation.Import(ctx, logger.With("file", importFileLocation), dryRun, madminClient, minioClient, *config)
+				err = reconciliation.Import(ctx, logger.With("file", path), dryRun, madminClient, minioClient, *config)
 				if err != nil {
-					return fmt.Errorf("failed to import from file %s: %w", importFileLocation, err)
+					return fmt.Errorf("failed to import from file %s: %w", path, err)
 				}
 			}
 			return nil
