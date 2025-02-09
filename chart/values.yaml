@@ -1,0 +1,56 @@
+useHooks: false
+url: null
+accessKey: null
+secretKey: null
+config: {}
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+image:
+  repository: yardenshoham/minio-config-cli
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+commonAnnotations: {}
+commonLabels: {}
+extraDeploy: []
+backoffLimit: 10
+command: []
+args: []
+containerSecurityContext:
+  enabled: true
+  seLinuxOptions: {}
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+podSecurityContext:
+  enabled: true
+  fsGroupChangePolicy: Always
+  sysctls: []
+  supplementalGroups: []
+  fsGroup: 1001
+extraEnvVars: []
+extraEnvVarsCM: ""
+extraEnvVarsSecret: ""
+extraVolumes: []
+extraVolumeMounts: []
+initContainers: []
+resources: {}
+customLivenessProbe: {}
+customReadinessProbe: {}
+customStartupProbe: {}
+automountServiceAccountToken: false
+hostAliases: []
+annotations: {}
+podLabels: {}
+podAnnotations: {}
