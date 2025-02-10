@@ -1,7 +1,9 @@
 package reconciliation
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"log/slog"
 	"os"
 	"testing"
@@ -12,13 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	miniotestcontainer "github.com/testcontainers/testcontainers-go/modules/minio"
+	"github.com/yardenshoham/minio-config-cli/pkg/validation"
 )
 
 func TestImport(t *testing.T) {
 	t.Parallel()
 	// create minio container
 	ctx := context.Background()
-	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-02-03T21-03-04Z")
+	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-02-07T23-21-09Z")
 	defer func() {
 		err := testcontainers.TerminateContainer(minioContainer)
 		require.NoError(t, err)
@@ -55,9 +58,7 @@ func TestImport(t *testing.T) {
 						"Action": []string{
 							"s3:GetObject",
 						},
-						"Resource": []string{
-							"arn:aws:s3:::foobar/*",
-						},
+						"Resource": "arn:aws:s3:::foobar/*",
 					},
 				},
 			},
@@ -86,7 +87,24 @@ func TestImport(t *testing.T) {
 						"Expiration": map[string]any{
 							"Days": 1,
 						},
-					}},
+					},
+				},
+			},
+			Policy: map[string]any{
+				"Version": "2012-10-17",
+				"Statement": []map[string]any{
+					{
+						"Effect": "Allow",
+						"Action": []string{
+							"s3:GetObject",
+							"s3:ListBucket",
+						},
+						"Resource": []string{"arn:aws:s3:::*"},
+						"Principal": map[string]any{
+							"AWS": []string{"*"},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -95,6 +113,11 @@ func TestImport(t *testing.T) {
 		Policies: policiesToImport,
 		Buckets:  bucketsToImport,
 	}
+
+	asJSON, err := json.Marshal(ImportConfig)
+	require.NoError(t, err)
+	err = validation.ValidateConfig(bytes.NewReader(asJSON))
+	require.NoError(t, err)
 
 	users, err := madminClient.ListUsers(ctx)
 	require.NoError(t, err)
@@ -140,6 +163,9 @@ func TestImport(t *testing.T) {
 		require.Equal(t, "rule1", lifecycle.Rules[0].ID)
 		require.Equal(t, "Enabled", lifecycle.Rules[0].Status)
 		require.Equal(t, 1, int(lifecycle.Rules[0].Expiration.Days))
+
+		_, err = minioClient.GetBucketPolicy(ctx, bucketsToImport[0].Name)
+		require.NoError(t, err)
 
 		policies, err = madminClient.ListCannedPolicies(ctx)
 		require.NoError(t, err)

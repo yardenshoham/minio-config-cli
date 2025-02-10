@@ -2,7 +2,6 @@ package reconciliation
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 
@@ -18,12 +17,12 @@ func importPolicies(ctx context.Context, logger *slog.Logger, dryRun bool, clien
 	logger.Info("importing policies", "amount", len(policies))
 	for _, policy := range policies {
 		logger.Info("importing policy", "name", policy.Name)
-		asJSON, err := json.Marshal(policy.Policy)
+		asByteSlice, err := mapAnyToByteSlice(policy.Policy)
 		if err != nil {
 			return fmt.Errorf("failed to marshal policy %s: %w", policy.Name, err)
 		}
 		if !dryRun {
-			err := client.AddCannedPolicy(ctx, policy.Name, []byte(asJSON))
+			err := client.AddCannedPolicy(ctx, policy.Name, asByteSlice)
 			if err != nil {
 				return fmt.Errorf("failed to import policy %s: %w", policy.Name, err)
 			}
