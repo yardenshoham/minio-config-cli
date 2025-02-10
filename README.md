@@ -32,37 +32,19 @@ shown below:
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/pkg/validation/schema.json
 policies:
   - name: read-foobar-bucket
-    policy: |
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Action": [
-              "s3:GetObject"
-            ],
-            "Resource": [
-              "arn:aws:s3:::foobar/*"
-            ]
-          }
-        ]
-      }
+    policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Action: [s3:GetObject]
+          Resource: [arn:aws:s3:::foobar/*]
   - name: admin-reports-bucket
-    policy: |
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Action": [
-              "*"
-            ],
-            "Resource": [
-              "arn:aws:s3:::admin-reports/*"
-            ]
-          }
-        ]
-      }
+    policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: Allow
+          Action: ["*"]
+          Resource: [arn:aws:s3:::admin-reports/*]
 users:
   - accessKey: iamenabled
     secretKey: mypasswordisnice
@@ -75,6 +57,13 @@ users:
     secretKey: mypasswordisnicemypasswordisnicemypasswordisnice
 buckets:
   - name: foobar
+    lifecycle:
+      Rules:
+        - ID: rule1
+          Status: Enabled
+          Expiration:
+            Days: 14
+  - name: admin-reports
 ```
 
 We provide a JSON schema file for correct creation of the config file. The
@@ -126,6 +115,7 @@ Available docker tags
 | -------- | --------------------------------------------- |
 | `latest` | latest available release of minio-config-cli. |
 | `va.b.c` | minio-config-cli version `a.b.c` .            |
+| `a.b.c`  | minio-config-cli version `a.b.c` .            |
 
 ### Docker run
 

@@ -1,37 +1,19 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/pkg/validation/schema.json
 policies:
   - name: read-foobar-bucket
-    policy: |
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Action": [
-              "s3:GetObject"
-            ],
-            "Resource": [
-              "arn:aws:s3:::foobar/*"
-            ]
-          }
-        ]
-      }
+    policy: 
+      Version: "2012-10-17"
+      Statement:
+      -  Effect: Allow
+         Action: [s3:GetObject]
+         Resource: [arn:aws:s3:::foobar/*]
   - name: admin-reports-bucket
-    policy: |
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Action": [
-              "*"
-            ],
-            "Resource": [
-              "arn:aws:s3:::admin-reports/*"
-            ]
-          }
-        ]
-      }
+    policy: 
+      Version: "2012-10-17"
+      Statement:
+      -  Effect: Allow
+         Action: ["*"]
+         Resource: [arn:aws:s3:::admin-reports/*]
 users:
   - accessKey: iamenabled
     secretKey: mypasswordisnice

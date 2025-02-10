@@ -19,6 +19,7 @@ type ImportConfig struct {
 	Buckets  []bucket `yaml:"buckets"`
 }
 
+// LoadConfig loads the config file into a struct.
 func LoadConfig(r io.Reader) (*ImportConfig, error) {
 	var readerText bytes.Buffer
 	_, err := io.Copy(&readerText, r)

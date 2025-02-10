@@ -29,6 +29,7 @@ func init() {
 	validator = compiler.MustCompile("schema.json")
 }
 
+// ValidateConfig validates the config file against the JSON schema.
 func ValidateConfig(config io.Reader) error {
 	var dataToValidate any
 	err := yaml.NewDecoder(config).Decode(&dataToValidate)

@@ -47,20 +47,20 @@ func TestImport(t *testing.T) {
 	policiesToImport := []policy{
 		{
 			Name: readFoobarBucketPolicyName,
-			Policy: `{
+			Policy: map[string]any{
 				"Version": "2012-10-17",
-				"Statement": [
+				"Statement": []map[string]any{
 					{
 						"Effect": "Allow",
-						"Action": [
-							"s3:GetObject"
-						],
-						"Resource": [
-							"arn:aws:s3:::foobar/*"
-						]
-					}
-				]
-			}`,
+						"Action": []string{
+							"s3:GetObject",
+						},
+						"Resource": []string{
+							"arn:aws:s3:::foobar/*",
+						},
+					},
+				},
+			},
 		},
 	}
 	usersToImport := []user{

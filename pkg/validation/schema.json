@@ -18,7 +18,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["enabled", "disabled"]
+            "enum": [
+              "enabled",
+              "disabled"
+            ]
           },
           "policies": {
             "type": "array",
@@ -27,7 +30,10 @@
             }
           }
         },
-        "required": ["accessKey", "secretKey"]
+        "required": [
+          "accessKey",
+          "secretKey"
+        ]
       }
     },
     "policies": {
@@ -39,10 +45,173 @@
             "type": "string"
           },
           "policy": {
-            "type": "string"
+            "type": "object",
+            "required": [
+              "Version",
+              "Statement"
+            ],
+            "properties": {
+              "Version": {
+                "type": "string",
+                "enum": [
+                  "2012-10-17",
+                  "2008-10-17"
+                ]
+              },
+              "Id": {
+                "type": "string"
+              },
+              "Statement": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "Effect"
+                  ],
+                  "properties": {
+                    "Sid": {
+                      "type": "string"
+                    },
+                    "Effect": {
+                      "type": "string",
+                      "enum": [
+                        "Allow",
+                        "Deny"
+                      ]
+                    },
+                    "Principal": {
+                      "type": "object",
+                      "properties": {
+                        "AWS": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        },
+                        "Service": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        },
+                        "Federated": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "NotPrincipal": {
+                      "type": "object"
+                    },
+                    "Action": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "NotAction": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "Resource": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "NotResource": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "Condition": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^[A-Za-z]+$": {
+                          "type": "object",
+                          "patternProperties": {
+                            "^[A-Za-z:]+$": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
-        "required": ["name", "policy"]
+        "required": [
+          "name",
+          "policy"
+        ]
       }
     },
     "buckets": {
@@ -61,109 +230,184 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": ["ID", "Status"],
+                  "required": [
+                    "ID",
+                    "Status"
+                  ],
                   "properties": {
-                    "ID": { "type": "string" },
+                    "ID": {
+                      "type": "string"
+                    },
                     "Status": {
                       "type": "string",
-                      "enum": ["Enabled", "Disabled"]
+                      "enum": [
+                        "Enabled",
+                        "Disabled"
+                      ]
                     },
-                    "Prefix": { "type": "string" },
+                    "Prefix": {
+                      "type": "string"
+                    },
                     "Filter": {
                       "type": "object",
                       "properties": {
                         "And": {
                           "type": "object",
                           "properties": {
-                            "Prefix": { "type": "string" },
+                            "Prefix": {
+                              "type": "string"
+                            },
                             "Tags": {
                               "type": "array",
                               "items": {
                                 "type": "object",
                                 "properties": {
-                                  "Key": { "type": "string" },
-                                  "Value": { "type": "string" }
+                                  "Key": {
+                                    "type": "string"
+                                  },
+                                  "Value": {
+                                    "type": "string"
+                                  }
                                 },
-                                "required": ["Key", "Value"]
+                                "required": [
+                                  "Key",
+                                  "Value"
+                                ]
                               }
                             },
-                            "ObjectSizeLessThan": { "type": "integer" },
-                            "ObjectSizeGreaterThan": { "type": "integer" }
+                            "ObjectSizeLessThan": {
+                              "type": "integer"
+                            },
+                            "ObjectSizeGreaterThan": {
+                              "type": "integer"
+                            }
                           }
                         },
-                        "Prefix": { "type": "string" },
+                        "Prefix": {
+                          "type": "string"
+                        },
                         "Tag": {
                           "type": "object",
                           "properties": {
-                            "Key": { "type": "string" },
-                            "Value": { "type": "string" }
+                            "Key": {
+                              "type": "string"
+                            },
+                            "Value": {
+                              "type": "string"
+                            }
                           }
                         },
-                        "ObjectSizeLessThan": { "type": "integer" },
-                        "ObjectSizeGreaterThan": { "type": "integer" }
+                        "ObjectSizeLessThan": {
+                          "type": "integer"
+                        },
+                        "ObjectSizeGreaterThan": {
+                          "type": "integer"
+                        }
                       }
                     },
                     "Expiration": {
                       "type": "object",
                       "properties": {
-                        "Date": { "type": "string", "format": "date-time" },
-                        "Days": { "type": "integer" },
-                        "ExpiredObjectDeleteMarker": { "type": "boolean" },
-                        "ExpiredObjectAllVersions": { "type": "boolean" }
+                        "Date": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "Days": {
+                          "type": "integer"
+                        },
+                        "ExpiredObjectDeleteMarker": {
+                          "type": "boolean"
+                        },
+                        "ExpiredObjectAllVersions": {
+                          "type": "boolean"
+                        }
                       }
                     },
                     "DelMarkerExpiration": {
                       "type": "object",
                       "properties": {
-                        "Days": { "type": "integer" }
+                        "Days": {
+                          "type": "integer"
+                        }
                       }
                     },
                     "AllVersionsExpiration": {
                       "type": "object",
                       "properties": {
-                        "Days": { "type": "integer" },
-                        "DeleteMarker": { "type": "boolean" }
+                        "Days": {
+                          "type": "integer"
+                        },
+                        "DeleteMarker": {
+                          "type": "boolean"
+                        }
                       }
                     },
                     "Transition": {
                       "type": "object",
-                      "required": ["StorageClass"],
+                      "required": [
+                        "StorageClass"
+                      ],
                       "properties": {
-                        "Date": { "type": "string", "format": "date-time" },
-                        "Days": { "type": "integer" },
-                        "StorageClass": { "type": "string" }
+                        "Date": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "Days": {
+                          "type": "integer"
+                        },
+                        "StorageClass": {
+                          "type": "string"
+                        }
                       }
                     },
                     "NoncurrentVersionExpiration": {
                       "type": "object",
                       "properties": {
-                        "NoncurrentDays": { "type": "integer" },
-                        "NewerNoncurrentVersions": { "type": "integer" }
+                        "NoncurrentDays": {
+                          "type": "integer"
+                        },
+                        "NewerNoncurrentVersions": {
+                          "type": "integer"
+                        }
                       }
                     },
                     "NoncurrentVersionTransition": {
                       "type": "object",
-                      "required": ["StorageClass"],
+                      "required": [
+                        "StorageClass"
+                      ],
                       "properties": {
-                        "StorageClass": { "type": "string" },
-                        "NoncurrentDays": { "type": "integer" },
-                        "NewerNoncurrentVersions": { "type": "integer" }
+                        "StorageClass": {
+                          "type": "string"
+                        },
+                        "NoncurrentDays": {
+                          "type": "integer"
+                        },
+                        "NewerNoncurrentVersions": {
+                          "type": "integer"
+                        }
                       }
                     },
                     "AbortIncompleteMultipartUpload": {
                       "type": "object",
                       "properties": {
-                        "DaysAfterInitiation": { "type": "integer" }
+                        "DaysAfterInitiation": {
+                          "type": "integer"
+                        }
                       }
                     }
                   }
                 }
               }
             },
-            "required": ["Rules"]
+            "required": [
+              "Rules"
+            ]
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       }
     }
   }
