@@ -44,3 +44,10 @@ users:
     secretKey: mypasswordisnicemypasswordisnicemypasswordisnice
 buckets:
   - name: foobar
+    lifecycle:
+      Rules:
+        - ID: rule1
+          Status: Enabled
+          Expiration:
+            Days: 14
+  - name: admin-reports

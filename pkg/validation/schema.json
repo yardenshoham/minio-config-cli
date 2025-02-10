@@ -53,6 +53,114 @@
           "name": {
             "type": "string",
             "minLength": 3
+          },
+          "lifecycle": {
+            "type": "object",
+            "properties": {
+              "Rules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["ID", "Status"],
+                  "properties": {
+                    "ID": { "type": "string" },
+                    "Status": {
+                      "type": "string",
+                      "enum": ["Enabled", "Disabled"]
+                    },
+                    "Prefix": { "type": "string" },
+                    "Filter": {
+                      "type": "object",
+                      "properties": {
+                        "And": {
+                          "type": "object",
+                          "properties": {
+                            "Prefix": { "type": "string" },
+                            "Tags": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "Key": { "type": "string" },
+                                  "Value": { "type": "string" }
+                                },
+                                "required": ["Key", "Value"]
+                              }
+                            },
+                            "ObjectSizeLessThan": { "type": "integer" },
+                            "ObjectSizeGreaterThan": { "type": "integer" }
+                          }
+                        },
+                        "Prefix": { "type": "string" },
+                        "Tag": {
+                          "type": "object",
+                          "properties": {
+                            "Key": { "type": "string" },
+                            "Value": { "type": "string" }
+                          }
+                        },
+                        "ObjectSizeLessThan": { "type": "integer" },
+                        "ObjectSizeGreaterThan": { "type": "integer" }
+                      }
+                    },
+                    "Expiration": {
+                      "type": "object",
+                      "properties": {
+                        "Date": { "type": "string", "format": "date-time" },
+                        "Days": { "type": "integer" },
+                        "ExpiredObjectDeleteMarker": { "type": "boolean" },
+                        "ExpiredObjectAllVersions": { "type": "boolean" }
+                      }
+                    },
+                    "DelMarkerExpiration": {
+                      "type": "object",
+                      "properties": {
+                        "Days": { "type": "integer" }
+                      }
+                    },
+                    "AllVersionsExpiration": {
+                      "type": "object",
+                      "properties": {
+                        "Days": { "type": "integer" },
+                        "DeleteMarker": { "type": "boolean" }
+                      }
+                    },
+                    "Transition": {
+                      "type": "object",
+                      "required": ["StorageClass"],
+                      "properties": {
+                        "Date": { "type": "string", "format": "date-time" },
+                        "Days": { "type": "integer" },
+                        "StorageClass": { "type": "string" }
+                      }
+                    },
+                    "NoncurrentVersionExpiration": {
+                      "type": "object",
+                      "properties": {
+                        "NoncurrentDays": { "type": "integer" },
+                        "NewerNoncurrentVersions": { "type": "integer" }
+                      }
+                    },
+                    "NoncurrentVersionTransition": {
+                      "type": "object",
+                      "required": ["StorageClass"],
+                      "properties": {
+                        "StorageClass": { "type": "string" },
+                        "NoncurrentDays": { "type": "integer" },
+                        "NewerNoncurrentVersions": { "type": "integer" }
+                      }
+                    },
+                    "AbortIncompleteMultipartUpload": {
+                      "type": "object",
+                      "properties": {
+                        "DaysAfterInitiation": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["Rules"]
           }
         },
         "required": ["name"]

@@ -9,7 +9,6 @@ import (
 	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	miniotestcontainer "github.com/testcontainers/testcontainers-go/modules/minio"
@@ -79,6 +78,16 @@ func TestImport(t *testing.T) {
 	bucketsToImport := []bucket{
 		{
 			Name: "foobar",
+			Lifecycle: map[string]any{
+				"Rules": []map[string]any{
+					{
+						"ID":     "rule1",
+						"Status": "Enabled",
+						"Expiration": map[string]any{
+							"Days": 1,
+						},
+					}},
+			},
 		},
 	}
 	ImportConfig := ImportConfig{
@@ -89,7 +98,7 @@ func TestImport(t *testing.T) {
 
 	users, err := madminClient.ListUsers(ctx)
 	require.NoError(t, err)
-	assert.Empty(t, users)
+	require.Empty(t, users)
 
 	policies, err := madminClient.ListCannedPolicies(ctx)
 	require.NoError(t, err)
@@ -97,7 +106,7 @@ func TestImport(t *testing.T) {
 
 	buckets, err := minioClient.ListBuckets(ctx)
 	require.NoError(t, err)
-	assert.Empty(t, buckets)
+	require.Empty(t, buckets)
 
 	// dry run should not change anything
 	err = Import(ctx, logger, true, madminClient, minioClient, ImportConfig)
@@ -105,15 +114,15 @@ func TestImport(t *testing.T) {
 
 	users, err = madminClient.ListUsers(ctx)
 	require.NoError(t, err)
-	assert.Empty(t, users)
+	require.Empty(t, users)
 
 	policies, err = madminClient.ListCannedPolicies(ctx)
 	require.NoError(t, err)
-	assert.Len(t, policies, builtinPinnedPoliciesAmount)
+	require.Len(t, policies, builtinPinnedPoliciesAmount)
 
 	buckets, err = minioClient.ListBuckets(ctx)
 	require.NoError(t, err)
-	assert.Empty(t, buckets)
+	require.Empty(t, buckets)
 
 	// twice to check idempotency
 	for range 2 {
@@ -122,22 +131,29 @@ func TestImport(t *testing.T) {
 
 		buckets, err = minioClient.ListBuckets(ctx)
 		require.NoError(t, err)
-		assert.Len(t, buckets, len(bucketsToImport))
-		assert.Equal(t, bucketsToImport[0].Name, buckets[0].Name)
+		require.Len(t, buckets, len(bucketsToImport))
+		require.Equal(t, bucketsToImport[0].Name, buckets[0].Name)
+
+		lifecycle, err := minioClient.GetBucketLifecycle(ctx, bucketsToImport[0].Name)
+		require.NoError(t, err)
+		require.Len(t, lifecycle.Rules, 1)
+		require.Equal(t, "rule1", lifecycle.Rules[0].ID)
+		require.Equal(t, "Enabled", lifecycle.Rules[0].Status)
+		require.Equal(t, 1, int(lifecycle.Rules[0].Expiration.Days))
 
 		policies, err = madminClient.ListCannedPolicies(ctx)
 		require.NoError(t, err)
-		assert.Len(t, policies, builtinPinnedPoliciesAmount+len(policiesToImport))
-		assert.Contains(t, policies, readFoobarBucketPolicyName)
+		require.Len(t, policies, builtinPinnedPoliciesAmount+len(policiesToImport))
+		require.Contains(t, policies, readFoobarBucketPolicyName)
 
 		users, err = madminClient.ListUsers(ctx)
 		require.NoError(t, err)
-		assert.Len(t, users, len(usersToImport))
-		assert.Contains(t, users, "first")
-		assert.Contains(t, users, "second")
-		assert.Equal(t, madmin.AccountEnabled, users["first"].Status)
-		assert.Equal(t, madmin.AccountDisabled, users["second"].Status)
-		assert.Equal(t, readFoobarBucketPolicyName, users["first"].PolicyName)
+		require.Len(t, users, len(usersToImport))
+		require.Contains(t, users, "first")
+		require.Contains(t, users, "second")
+		require.Equal(t, madmin.AccountEnabled, users["first"].Status)
+		require.Equal(t, madmin.AccountDisabled, users["second"].Status)
+		require.Equal(t, readFoobarBucketPolicyName, users["first"].PolicyName)
 	}
 
 	testdataConfigFile, err := os.Open("../../testdata/config.yaml")
