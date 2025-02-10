@@ -143,7 +143,7 @@ docker run \
 You can build an own docker image by running
 
 ```shell
-go build && docker build -t minio-config-cli .
+CGO_ENABLED=0 go build && docker build -t minio-config-cli .
 ```
 
 ## Helm
