@@ -13,6 +13,7 @@ import (
 type bucket struct {
 	Name      string         `yaml:"name"`
 	Lifecycle map[string]any `yaml:"lifecycle,omitempty"`
+	Policy    map[string]any `yaml:"policy,omitempty"`
 }
 
 func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, client *minio.Client, buckets []bucket) error {
@@ -51,6 +52,20 @@ func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, client
 					return fmt.Errorf("failed to set lifecycle configuration %s for bucket %s: %w", bucket.Lifecycle, bucket.Name, err)
 				}
 				logger.Info("imported bucket lifecycle", "name", bucket.Name)
+			}
+		}
+		if len(bucket.Policy) > 0 {
+			logger.Info("importing bucket policy", "name", bucket.Name)
+			asByteSlice, err := mapAnyToByteSlice(bucket.Policy)
+			if err != nil {
+				return fmt.Errorf("failed to marshal policy for bucket %s: %w", bucket.Name, err)
+			}
+			if !dryRun {
+				err = client.SetBucketPolicy(ctx, bucket.Name, string(asByteSlice))
+				if err != nil {
+					return fmt.Errorf("failed to set policy for bucket %s: %w", bucket.Name, err)
+				}
+				logger.Info("imported bucket policy", "name", bucket.Name)
 			}
 		}
 	}
