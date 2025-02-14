@@ -2,7 +2,6 @@ package reconciliation
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"log/slog"
 	"os"
@@ -20,7 +19,7 @@ import (
 func TestImport(t *testing.T) {
 	t.Parallel()
 	// create minio container
-	ctx := context.Background()
+	ctx := t.Context()
 	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-02-07T23-21-09Z")
 	defer func() {
 		err := testcontainers.TerminateContainer(minioContainer)
