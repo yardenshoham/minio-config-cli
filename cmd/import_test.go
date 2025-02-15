@@ -23,7 +23,7 @@ func TestImportCmd(t *testing.T) {
 				"invalid-url",
 				"minioadmin",
 				"minioadmin",
-				"--import-file-location=./testdata/config.yaml",
+				"--import-file-location=../testdata/config.yaml",
 			},
 		},
 		{
@@ -33,6 +33,15 @@ func TestImportCmd(t *testing.T) {
 				"minioadmin",
 				"minioadmin",
 				"--import-file-location=doesnotexistiamsure.yaml",
+			},
+		},
+		{
+			name: "malformed config",
+			args: []string{
+				"http://localhost:9000",
+				"minioadmin",
+				"minioadmin",
+				"--import-file-location=../testdata/malformed/config.yaml",
 			},
 		},
 	}
