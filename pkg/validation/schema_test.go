@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
@@ -14,4 +15,11 @@ func TestValidateConfig(t *testing.T) {
 	defer file.Close()
 	err = ValidateConfig(file)
 	require.NoError(t, err)
+}
+
+func TestValidateConfigInvalid(t *testing.T) {
+	t.Parallel()
+	config := "I am not valid YAML"
+	err := ValidateConfig(bytes.NewReader([]byte(config)))
+	require.Error(t, err)
 }
