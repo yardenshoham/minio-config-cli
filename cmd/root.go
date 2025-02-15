@@ -18,6 +18,7 @@ func newRootCmd() *cobra.Command {
 func Execute() {
 	rootCmd := newRootCmd()
 	rootCmd.AddCommand(newImportCmd())
+	rootCmd.AddCommand(newVersionCmd())
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
