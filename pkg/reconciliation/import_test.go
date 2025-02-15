@@ -107,13 +107,13 @@ func TestImport(t *testing.T) {
 			},
 		},
 	}
-	ImportConfig := ImportConfig{
+	importConfig := ImportConfig{
 		Users:    usersToImport,
 		Policies: policiesToImport,
 		Buckets:  bucketsToImport,
 	}
 
-	asJSON, err := json.Marshal(ImportConfig)
+	asJSON, err := json.Marshal(importConfig)
 	require.NoError(t, err)
 	err = validation.ValidateConfig(bytes.NewReader(asJSON))
 	require.NoError(t, err)
@@ -131,7 +131,7 @@ func TestImport(t *testing.T) {
 	require.Empty(t, buckets)
 
 	// dry run should not change anything
-	err = Import(ctx, logger, true, madminClient, minioClient, ImportConfig)
+	err = Import(ctx, logger, true, madminClient, minioClient, importConfig)
 	require.NoError(t, err)
 
 	users, err = madminClient.ListUsers(ctx)
@@ -148,7 +148,7 @@ func TestImport(t *testing.T) {
 
 	// twice to check idempotency
 	for range 2 {
-		err = Import(ctx, logger, false, madminClient, minioClient, ImportConfig)
+		err = Import(ctx, logger, false, madminClient, minioClient, importConfig)
 		require.NoError(t, err)
 
 		buckets, err = minioClient.ListBuckets(ctx)
@@ -189,4 +189,49 @@ func TestImport(t *testing.T) {
 	require.NoError(t, err)
 	err = Import(ctx, logger, false, madminClient, minioClient, *testdataConfig)
 	require.NoError(t, err)
+
+	importConfig = ImportConfig{
+		Users: []user{
+			{
+				AccessKey: "first",
+				SecretKey: "secretnicewowwow",
+				Policies:  []string{"this-policy-does-not-exist"},
+			},
+		},
+	}
+	err = Import(ctx, logger, false, madminClient, minioClient, importConfig)
+	require.Error(t, err)
+
+	importConfig = ImportConfig{
+		Users: []user{
+			{
+				AccessKey: "missing-secret-key",
+			},
+		},
+	}
+	err = Import(ctx, logger, false, madminClient, minioClient, importConfig)
+	require.Error(t, err)
+
+	importConfig = ImportConfig{
+		Buckets: []bucket{
+			{
+				Name: "!@#$%^&badnameשםלאטוב",
+			},
+		},
+	}
+	err = Import(ctx, logger, false, madminClient, minioClient, importConfig)
+	require.Error(t, err)
+
+	importConfig = ImportConfig{
+		Buckets: []bucket{
+			{
+				Name: "bad-lifecycle",
+				Policy: map[string]any{
+					"not a valid policy": true,
+				},
+			},
+		},
+	}
+	err = Import(ctx, logger, false, madminClient, minioClient, importConfig)
+	require.Error(t, err)
 }
