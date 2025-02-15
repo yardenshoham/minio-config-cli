@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -24,7 +23,7 @@ func newImportCmd() *cobra.Command {
 		Short:   "Import configuration from the specified files",
 		Example: "minio-config-cli import http://localhost:9000 minioadmin minioadmin --import-file-location=config.yaml",
 		Args:    cobra.ExactArgs(3),
-		RunE: func(_ *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			url, err := url.Parse(args[0])
 			if err != nil {
 				return fmt.Errorf("failed to parse minio url: %w", err)
@@ -45,7 +44,7 @@ func newImportCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create minio client: %w", err)
 			}
-			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+			logger := slog.New(slog.NewTextHandler(cmd.OutOrStdout(), nil))
 			if dryRun {
 				logger.Info("running in dry-run mode")
 				logger = logger.With("dry-run", "true")
@@ -65,7 +64,7 @@ func newImportCmd() *cobra.Command {
 					return fmt.Errorf("failed to walk import file locations: %w", err)
 				}
 			}
-			ctx := context.Background()
+			ctx := cmd.Context()
 			for _, path := range filePaths {
 				file, err := os.Open(path)
 				if err != nil {
