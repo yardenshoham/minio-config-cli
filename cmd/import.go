@@ -76,7 +76,8 @@ func newImportCmd() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to load config from file %s: %w", path, err)
 				}
-				err = reconciliation.Import(ctx, logger.With("file", path), dryRun, madminClient, minioClient, *config)
+				reconciler := reconciliation.NewReconciler(logger.With("file", path), madminClient, minioClient, dryRun)
+				err = reconciler.Import(ctx, *config)
 				if err != nil {
 					return fmt.Errorf("failed to import from file %s: %w", path, err)
 				}

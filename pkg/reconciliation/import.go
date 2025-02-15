@@ -38,17 +38,35 @@ func LoadConfig(r io.Reader) (*ImportConfig, error) {
 	return config, nil
 }
 
+// Reconciler handles the configuration of a reconciliation run.
+type Reconciler struct {
+	logger       *slog.Logger
+	madminClient *madmin.AdminClient
+	minioClient  *minio.Client
+	dryRun       bool
+}
+
+// NewReconciler creates a new Reconciler instance.
+func NewReconciler(logger *slog.Logger, madminClient *madmin.AdminClient, minioClient *minio.Client, dryRun bool) *Reconciler {
+	return &Reconciler{
+		logger:       logger,
+		madminClient: madminClient,
+		minioClient:  minioClient,
+		dryRun:       dryRun,
+	}
+}
+
 // Import imports the all resources from the config into the MinIO server. It is idempotent.
-func Import(ctx context.Context, logger *slog.Logger, dryRun bool, madminClient *madmin.AdminClient, minioClient *minio.Client, config ImportConfig) error {
-	err := importPolicies(ctx, logger, dryRun, madminClient, config.Policies)
+func (r *Reconciler) Import(ctx context.Context, config ImportConfig) error {
+	err := r.importPolicies(ctx, config.Policies)
 	if err != nil {
 		return fmt.Errorf("failed to import policies: %w", err)
 	}
-	err = importUsers(ctx, logger, dryRun, madminClient, config.Users)
+	err = r.importUsers(ctx, config.Users)
 	if err != nil {
 		return fmt.Errorf("failed to import users: %w", err)
 	}
-	err = importBuckets(ctx, logger, dryRun, minioClient, config.Buckets)
+	err = r.importBuckets(ctx, config.Buckets)
 	if err != nil {
 		return fmt.Errorf("failed to import buckets: %w", err)
 	}

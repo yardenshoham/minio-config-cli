@@ -3,7 +3,6 @@ package reconciliation
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/minio/madmin-go/v3"
 )
@@ -19,8 +18,8 @@ type user struct {
 	Status madmin.AccountStatus `yaml:"status"`
 }
 
-func importUsers(ctx context.Context, logger *slog.Logger, dryRun bool, client *madmin.AdminClient, users []user) error {
-	logger.Info("importing users", "amount", len(users))
+func (r *Reconciler) importUsers(ctx context.Context, users []user) error {
+	r.logger.Info("importing users", "amount", len(users))
 	for _, user := range users {
 		setUserPayload := madmin.AddOrUpdateUserReq{
 			SecretKey: user.SecretKey,
@@ -30,20 +29,20 @@ func importUsers(ctx context.Context, logger *slog.Logger, dryRun bool, client *
 		if setUserPayload.Status == "" {
 			setUserPayload.Status = madmin.AccountEnabled
 		}
-		logger.Info("importing user", "accessKey", user.AccessKey, "status", setUserPayload.Status)
+		r.logger.Info("importing user", "accessKey", user.AccessKey, "status", setUserPayload.Status)
 
-		if !dryRun {
+		if !r.dryRun {
 			// we can't attach the policies in SetUserReq because of
 			// https://github.com/minio/madmin-go/issues/216
 			// so we will do it after the user is created
-			err := client.SetUserReq(ctx, user.AccessKey, setUserPayload)
+			err := r.madminClient.SetUserReq(ctx, user.AccessKey, setUserPayload)
 			if err != nil {
 				return fmt.Errorf("failed to set user %s: %w", user.AccessKey, err)
 			}
-			logger.Info("imported user", "accessKey", user.AccessKey)
+			r.logger.Info("imported user", "accessKey", user.AccessKey)
 		}
 		if len(user.Policies) > 0 {
-			err := attachUserPolicies(ctx, logger, dryRun, client, user)
+			err := r.attachUserPolicies(ctx, user)
 			if err != nil {
 				return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
 			}
@@ -52,8 +51,8 @@ func importUsers(ctx context.Context, logger *slog.Logger, dryRun bool, client *
 	return nil
 }
 
-func attachUserPolicies(ctx context.Context, logger *slog.Logger, dryRun bool, client *madmin.AdminClient, user user) error {
-	policyEntities, err := client.GetPolicyEntities(ctx, madmin.PolicyEntitiesQuery{
+func (r *Reconciler) attachUserPolicies(ctx context.Context, user user) error {
+	policyEntities, err := r.madminClient.GetPolicyEntities(ctx, madmin.PolicyEntitiesQuery{
 		Users:  []string{user.AccessKey},
 		Policy: user.Policies,
 	})
@@ -69,28 +68,28 @@ func attachUserPolicies(ctx context.Context, logger *slog.Logger, dryRun bool, c
 			panic("queried user's " + user.AccessKey + " policies but got user " + policyUserMapping.User)
 		}
 		for _, attachedPolicy := range policyUserMapping.Policies {
-			logger.Info("user %s already has policy %s attached", user.AccessKey, attachedPolicy)
+			r.logger.Info("user %s already has policy %s attached", user.AccessKey, attachedPolicy)
 			delete(policiesToAttachMap, attachedPolicy)
 		}
 	}
 	if len(policiesToAttachMap) == 0 {
-		logger.Info("no policies left to attach", "accessKey", user.AccessKey, "policies", user.Policies)
+		r.logger.Info("no policies left to attach", "accessKey", user.AccessKey, "policies", user.Policies)
 		return nil
 	}
 	policiesToAttach := make([]string, 0, len(policiesToAttachMap))
 	for policy := range policiesToAttachMap {
 		policiesToAttach = append(policiesToAttach, policy)
 	}
-	logger.Info("attaching policies to user", "accessKey", user.AccessKey, "policies", policiesToAttach)
-	if !dryRun {
-		policyAssociationResp, err := client.AttachPolicy(ctx, madmin.PolicyAssociationReq{
+	r.logger.Info("attaching policies to user", "accessKey", user.AccessKey, "policies", policiesToAttach)
+	if !r.dryRun {
+		policyAssociationResp, err := r.madminClient.AttachPolicy(ctx, madmin.PolicyAssociationReq{
 			Policies: policiesToAttach,
 			User:     user.AccessKey,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to attach policies to user %s: %w", user.AccessKey, err)
 		}
-		logger.Info("attached policies to user", "accessKey", user.AccessKey, "policies", policyAssociationResp.PoliciesAttached)
+		r.logger.Info("attached policies to user", "accessKey", user.AccessKey, "policies", policyAssociationResp.PoliciesAttached)
 	}
 	return nil
 }

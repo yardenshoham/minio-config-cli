@@ -131,7 +131,8 @@ func TestImport(t *testing.T) {
 	require.Empty(t, buckets)
 
 	// dry run should not change anything
-	err = Import(ctx, logger, true, madminClient, minioClient, ImportConfig)
+	reconciler := NewReconciler(logger, madminClient, minioClient, true)
+	err = reconciler.Import(ctx, ImportConfig)
 	require.NoError(t, err)
 
 	users, err = madminClient.ListUsers(ctx)
@@ -146,9 +147,10 @@ func TestImport(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, buckets)
 
+	reconciler = NewReconciler(logger, madminClient, minioClient, false)
 	// twice to check idempotency
 	for range 2 {
-		err = Import(ctx, logger, false, madminClient, minioClient, ImportConfig)
+		err = reconciler.Import(ctx, ImportConfig)
 		require.NoError(t, err)
 
 		buckets, err = minioClient.ListBuckets(ctx)
@@ -187,6 +189,6 @@ func TestImport(t *testing.T) {
 
 	testdataConfig, err := LoadConfig(testdataConfigFile)
 	require.NoError(t, err)
-	err = Import(ctx, logger, false, madminClient, minioClient, *testdataConfig)
+	err = reconciler.Import(ctx, *testdataConfig)
 	require.NoError(t, err)
 }
