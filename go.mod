@@ -6,7 +6,7 @@ require (
 	github.com/minio/madmin-go/v3 v3.0.91
 	github.com/minio/minio-go/v7 v7.0.86
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
-	github.com/spf13/cobra v1.9.0
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.35.0
