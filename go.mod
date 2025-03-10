@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/minio/madmin-go/v3 v3.0.96
-	github.com/minio/minio-go/v7 v7.0.87
+	github.com/minio/minio-go/v7 v7.0.88
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
