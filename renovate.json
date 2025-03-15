@@ -6,5 +6,27 @@
   ],
   "postUpdateOptions": [
     "gomodTidy"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update MinIO test container versions in Golang tests",
+      "fileMatch": [
+        "pkg/reconciliation/import_test\\.go$"
+      ],
+      "matchStrings": [
+        "miniotestcontainer\\.Run\\((?:[^,]*),\\s*\"(?<depName>minio\\/minio):(?<currentValue>RELEASE\\.[\\d]{4}-[\\d]{2}-[\\d]{2}T[\\d]{2}-[\\d]{2}-[\\d]{2}Z)\"\\)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "regex:^RELEASE\\.(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "minio/minio"
+      ],
+      "allowedVersions": "/^RELEASE\\.[\\d]{4}-[\\d]{2}-[\\d]{2}T[\\d]{2}-[\\d]{2}-[\\d]{2}Z$/"
+    }
   ]
 }
