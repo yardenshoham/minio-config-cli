@@ -3,7 +3,7 @@ module github.com/yardenshoham/minio-config-cli
 go 1.24.0
 
 require (
-	github.com/minio/madmin-go/v3 v3.0.99
+	github.com/minio/madmin-go/v3 v3.0.100
 	github.com/minio/minio-go/v7 v7.0.88
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/spf13/cobra v1.9.1
@@ -19,6 +19,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
