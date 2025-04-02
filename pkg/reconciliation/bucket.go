@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/lifecycle"
 )
@@ -14,12 +15,13 @@ type bucket struct {
 	Name      string         `yaml:"name"`
 	Lifecycle map[string]any `yaml:"lifecycle,omitempty"`
 	Policy    map[string]any `yaml:"policy,omitempty"`
+	Quota     map[string]any `yaml:"quota,omitempty"`
 }
 
-func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, client *minio.Client, buckets []bucket) error {
+func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, madminClient *madmin.AdminClient, minioClient *minio.Client, buckets []bucket) error {
 	logger.Info("importing buckets", "amount", len(buckets))
 	for _, bucket := range buckets {
-		exists, err := client.BucketExists(ctx, bucket.Name)
+		exists, err := minioClient.BucketExists(ctx, bucket.Name)
 		if err != nil {
 			return fmt.Errorf("failed to check if bucket %s exists: %w", bucket.Name, err)
 		}
@@ -28,7 +30,7 @@ func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, client
 		} else {
 			logger.Info("importing bucket", "name", bucket.Name)
 			if !dryRun {
-				err = client.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{})
+				err = minioClient.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{})
 				if err != nil {
 					return fmt.Errorf("failed to import bucket %s: %w", bucket.Name, err)
 				}
@@ -47,7 +49,7 @@ func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, client
 				return fmt.Errorf("failed to unmarshal lifecycle configuration %s for bucket %s: %w", bucket.Lifecycle, bucket.Name, err)
 			}
 			if !dryRun {
-				err = client.SetBucketLifecycle(ctx, bucket.Name, lifecycleConfiguration)
+				err = minioClient.SetBucketLifecycle(ctx, bucket.Name, lifecycleConfiguration)
 				if err != nil {
 					return fmt.Errorf("failed to set lifecycle configuration %s for bucket %s: %w", bucket.Lifecycle, bucket.Name, err)
 				}
@@ -61,11 +63,36 @@ func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, client
 				return fmt.Errorf("failed to marshal policy for bucket %s: %w", bucket.Name, err)
 			}
 			if !dryRun {
-				err = client.SetBucketPolicy(ctx, bucket.Name, string(asByteSlice))
+				err = minioClient.SetBucketPolicy(ctx, bucket.Name, string(asByteSlice))
 				if err != nil {
 					return fmt.Errorf("failed to set policy for bucket %s: %w", bucket.Name, err)
 				}
 				logger.Info("imported bucket policy", "name", bucket.Name)
+			}
+		}
+		if len(bucket.Quota) > 0 {
+			logger.Info("importing bucket quota", "name", bucket.Name)
+			bucketQuota := madmin.BucketQuota{}
+			asJSON, err := json.Marshal(bucket.Quota)
+			if err != nil {
+				return fmt.Errorf("failed to marshal quota for bucket %s: %w", bucket.Name, err)
+			}
+			err = json.Unmarshal(asJSON, &bucketQuota)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal quota for bucket %s: %w", bucket.Name, err)
+			}
+			// `hard` is the only supported quota type
+			bucketQuota.Type = madmin.HardQuota
+
+			// see https://github.com/minio/console/issues/3524 for why we need to set Quota
+			bucketQuota.Quota = bucketQuota.Size
+
+			if !dryRun {
+				err = madminClient.SetBucketQuota(ctx, bucket.Name, &bucketQuota)
+				if err != nil {
+					return fmt.Errorf("failed to set quota for bucket %s: %w", bucket.Name, err)
+				}
+				logger.Info("imported bucket quota", "name", bucket.Name)
 			}
 		}
 	}

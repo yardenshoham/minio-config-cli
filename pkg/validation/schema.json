@@ -413,6 +413,43 @@
             "required": [
               "Rules"
             ]
+          },
+          "quota": {
+            "type": "object",
+            "properties": {
+              "size": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Maximum size allowed per bucket in bytes"
+              },
+              "rate": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Bandwidth rate allocated per bucket"
+              },
+              "requests": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of requests allocated per bucket"
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "size"
+                ]
+              },
+              {
+                "required": [
+                  "rate"
+                ]
+              },
+              {
+                "required": [
+                  "requests"
+                ]
+              }
+            ]
           }
         },
         "required": [
