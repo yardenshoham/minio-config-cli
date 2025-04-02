@@ -66,6 +66,7 @@ buckets:
           Expiration:
             Days: 14
   - name: admin-reports
+    size: 10737418240 # 10Gi
   - name: static-assets-public
     policy:
       Version: "2012-10-17"

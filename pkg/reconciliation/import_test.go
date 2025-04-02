@@ -89,6 +89,9 @@ func TestImport(t *testing.T) {
 					},
 				},
 			},
+			Quota: map[string]any{
+				"Size": 10737418240,
+			},
 			Policy: map[string]any{
 				"Version": "2012-10-17",
 				"Statement": []map[string]any{
@@ -155,6 +158,10 @@ func TestImport(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, buckets, len(bucketsToImport))
 		require.Equal(t, bucketsToImport[0].Name, buckets[0].Name)
+
+		quota, err := madminClient.GetBucketQuota(ctx, bucketsToImport[0].Name)
+		require.NoError(t, err)
+		require.Equal(t, uint64(bucketsToImport[0].Quota["Size"].(int)), quota.Size)
 
 		lifecycle, err := minioClient.GetBucketLifecycle(ctx, bucketsToImport[0].Name)
 		require.NoError(t, err)

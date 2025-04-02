@@ -48,7 +48,7 @@ func Import(ctx context.Context, logger *slog.Logger, dryRun bool, madminClient 
 	if err != nil {
 		return fmt.Errorf("failed to import users: %w", err)
 	}
-	err = importBuckets(ctx, logger, dryRun, minioClient, config.Buckets)
+	err = importBuckets(ctx, logger, dryRun, madminClient, minioClient, config.Buckets)
 	if err != nil {
 		return fmt.Errorf("failed to import buckets: %w", err)
 	}
