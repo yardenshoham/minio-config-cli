@@ -3,6 +3,7 @@ module github.com/yardenshoham/minio-config-cli
 go 1.24.0
 
 require (
+	github.com/goccy/go-yaml v1.17.1
 	github.com/minio/madmin-go/v3 v3.0.106
 	github.com/minio/minio-go/v7 v7.0.90
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
@@ -10,7 +11,6 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.36.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.36.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -90,4 +90,5 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
