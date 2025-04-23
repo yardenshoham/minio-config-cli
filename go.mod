@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/goccy/go-yaml v1.17.1
 	github.com/minio/madmin-go/v3 v3.0.109
-	github.com/minio/minio-go/v7 v7.0.90
+	github.com/minio/minio-go/v7 v7.0.91
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
