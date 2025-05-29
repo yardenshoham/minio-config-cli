@@ -3,7 +3,7 @@ module github.com/yardenshoham/minio-config-cli
 go 1.24.0
 
 require (
-	github.com/goccy/go-yaml v1.17.1
+	github.com/goccy/go-yaml v1.18.0
 	github.com/minio/madmin-go/v3 v3.0.110
 	github.com/minio/minio-go/v7 v7.0.92
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
