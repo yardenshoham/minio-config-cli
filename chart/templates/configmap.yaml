@@ -9,3 +9,7 @@ metadata:
   {{- end }}
 data:
   config.yaml: | {{ toYaml .Values.config | nindent 4 }}
+  
+  {{- if .Values.extraConfig }}
+  extra-config.yaml: | {{ toYaml .Values.extraConfig | nindent 4 }}
+  {{- end }}

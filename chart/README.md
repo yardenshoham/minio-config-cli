@@ -68,6 +68,7 @@ Learn more about [init containers](https://kubernetes.io/docs/concepts/workloads
 | `accessKey`                                         | MinIO access key                                                                            | REQUIRED         |
 | `secretKey`                                         | MinIO secret key                                                                            | REQUIRED         |
 | `config`                                            | minio-config-cli config file as a YAML/JSON object                                          | `{}`             |
+| `extraConfig`                                       | Additional optional minio-config-cli config file as a YAML/JSON object                      | `{}`             |
 | `nameOverride`                                      | String to partially override common.names.name                                              | `""`             |
 | `fullnameOverride`                                  | String to fully override common.names.fullname                                              | `""`             |
 | `commonAnnotations`                                 | Annotations to add to all deployed objects                                                  | `{}`             |

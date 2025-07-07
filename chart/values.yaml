@@ -3,6 +3,7 @@ url: null
 accessKey: null
 secretKey: null
 config: {}
+extraConfig: {}
 
 global:
   imageRegistry: ""
