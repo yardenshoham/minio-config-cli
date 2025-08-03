@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "common.names.fullname" . | trunc 37 | trimSuffix "-" }}-{{ sha256sum .Chart.AppVersion | trunc 8 }}-{{ sha256sum (toYaml .Values.config) | trunc 8 }}
+  name: {{ include "common.names.fullname" . | trunc 37 | trimSuffix "-" }}-{{ sha256sum .Chart.AppVersion | trunc 8 }}-{{ sha256sum (toYaml (dict "config" .Values.config "extraConfig" .Values.extraConfig)) | trunc 8 }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   {{- if .Values.useHooks }}
