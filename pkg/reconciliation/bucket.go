@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/minio/madmin-go/v3"
+	"github.com/minio/madmin-go/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/lifecycle"
 )
@@ -83,9 +83,6 @@ func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, madmin
 			}
 			// `hard` is the only supported quota type
 			bucketQuota.Type = madmin.HardQuota
-
-			// see https://github.com/minio/console/issues/3524 for why we need to set Quota
-			bucketQuota.Quota = bucketQuota.Size
 
 			if !dryRun {
 				err = madminClient.SetBucketQuota(ctx, bucket.Name, &bucketQuota)
