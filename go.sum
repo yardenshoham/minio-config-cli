@@ -264,8 +264,8 @@ github.com/matttproud/golang_protobuf_extensions v1.0.4 h1:mmDVorXM7PCGKw94cs5zk
 github.com/matttproud/golang_protobuf_extensions v1.0.4/go.mod h1:BSXmuO+STAnVfrANrmjBb36TMTDstsz7MSK+HVaYKv4=
 github.com/minio/crc64nvme v1.0.2 h1:6uO1UxGAD+kwqWWp7mBFsi5gAse66C4NXO8cmcVculg=
 github.com/minio/crc64nvme v1.0.2/go.mod h1:eVfm2fAzLlxMdUGc0EEBGSMmPwmXD5XiNRpnu9J3bvg=
-github.com/minio/madmin-go/v4 v4.2.8 h1:UjjP3a7bwL8WcfCj5Wl36YAJLmfXAixZhm196xkTuMI=
-github.com/minio/madmin-go/v4 v4.2.8/go.mod h1:16tMDVIHWcp1zrmL6XrgCwPlZC7kB3UNNs5GDNnjYLQ=
+github.com/minio/madmin-go/v4 v4.2.9 h1:5kOQjJRcWJNfmXbI/sseL2xGvHNwbv80ew7TkEiZCUE=
+github.com/minio/madmin-go/v4 v4.2.9/go.mod h1:16tMDVIHWcp1zrmL6XrgCwPlZC7kB3UNNs5GDNnjYLQ=
 github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
 github.com/minio/md5-simd v1.1.2/go.mod h1:MzdKDxYpY2BT9XQFocsiZf/NKVtR7nkE4RoEpN+20RM=
 github.com/minio/minio-go/v7 v7.0.95 h1:ywOUPg+PebTMTzn9VDsoFJy32ZuARN9zhB+K3IYEvYU=
