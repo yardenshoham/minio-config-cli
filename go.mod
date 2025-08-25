@@ -9,7 +9,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/spf13/cobra v1.9.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.38.0
 	k8s.io/api v0.33.4
