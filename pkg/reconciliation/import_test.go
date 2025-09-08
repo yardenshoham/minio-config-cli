@@ -20,7 +20,7 @@ func TestImport(t *testing.T) {
 	t.Parallel()
 	// create minio container
 	ctx := t.Context()
-	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-07-23T15-54-02Z")
+	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-09-07T16-13-09Z")
 	defer func() {
 		err := testcontainers.TerminateContainer(minioContainer)
 		require.NoError(t, err)
