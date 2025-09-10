@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.38.0
-	k8s.io/api v0.33.4
+	k8s.io/api v0.34.1
 )
 
 require (
