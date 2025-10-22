@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"time"
 
 	"github.com/goccy/go-yaml"
 	"github.com/minio/madmin-go/v4"
@@ -40,7 +41,28 @@ func LoadConfig(r io.Reader) (*ImportConfig, error) {
 
 // Import imports the all resources from the config into the MinIO server. It is idempotent.
 func Import(ctx context.Context, logger *slog.Logger, dryRun bool, madminClient *madmin.AdminClient, minioClient *minio.Client, config ImportConfig) error {
-	err := importPolicies(ctx, logger, dryRun, madminClient, config.Policies)
+	endpointURL := madminClient.GetEndpointURL()
+	anonClient, err := madmin.NewAnonymousClient(endpointURL.Host, endpointURL.Scheme == "https")
+	if err != nil {
+		return fmt.Errorf("failed to create anonymous client: %w", err)
+	}
+	for {
+		healthResult, err := anonClient.Healthy(ctx, madmin.HealthOpts{ClusterRead: true})
+		if healthResult.Healthy {
+			break
+		}
+		if err != nil {
+			logger.WarnContext(ctx, "failed to get health status, server might not be up yet", "error", err)
+		} else {
+			logger.WarnContext(ctx, "server is not healthy yet, waiting...")
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("context cancelled while waiting for server health: %w", ctx.Err())
+		case <-time.After(2 * time.Second):
+		}
+	}
+	err = importPolicies(ctx, logger, dryRun, madminClient, config.Policies)
 	if err != nil {
 		return fmt.Errorf("failed to import policies: %w", err)
 	}
