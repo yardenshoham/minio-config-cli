@@ -24,7 +24,7 @@ func testSetup(t *testing.T, customizers ...testcontainers.ContainerCustomizer) 
 	// don't wait for minio to be up, we want to test our waiting code
 	noWaitStrategy := wait.ForNop(func(_ context.Context, _ wait.StrategyTarget) error { return nil })
 	finalCustomizers := append(customizers, testcontainers.WithWaitStrategy(noWaitStrategy))
-	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-09-07T16-13-09Z", finalCustomizers...)
+	minioContainer, err := miniotestcontainer.Run(ctx, "coollabsio/minio:RELEASE.2025-10-15T17-29-55Z", finalCustomizers...)
 	require.NoError(t, err)
 
 	endpoint, err := minioContainer.ConnectionString(ctx)
