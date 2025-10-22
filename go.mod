@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gruntwork-io/terratest v0.51.0
-	github.com/minio/madmin-go/v4 v4.4.8
+	github.com/minio/madmin-go/v4 v4.3.9
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/spf13/cobra v1.10.1
@@ -122,6 +122,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/crc64nvme v1.0.2 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
+	github.com/minio/pkg/v3 v3.4.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/hashstructure v1.1.0 // indirect

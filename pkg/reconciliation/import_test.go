@@ -2,6 +2,7 @@ package reconciliation
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log/slog"
 	"os"
@@ -13,18 +14,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	miniotestcontainer "github.com/testcontainers/testcontainers-go/modules/minio"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/yardenshoham/minio-config-cli/pkg/validation"
 )
 
-func TestImport(t *testing.T) {
-	t.Parallel()
-	// create minio container
+func testSetup(t *testing.T, customizers ...testcontainers.ContainerCustomizer) (context.Context, *madmin.AdminClient, *minio.Client, *slog.Logger, *miniotestcontainer.MinioContainer) {
+	t.Helper()
 	ctx := t.Context()
-	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-09-07T16-13-09Z")
-	defer func() {
-		err := testcontainers.TerminateContainer(minioContainer)
-		require.NoError(t, err)
-	}()
+	// don't wait for minio to be up, we want to test our waiting code
+	noWaitStrategy := wait.ForNop(func(_ context.Context, _ wait.StrategyTarget) error { return nil })
+	finalCustomizers := append(customizers, testcontainers.WithWaitStrategy(noWaitStrategy))
+	minioContainer, err := miniotestcontainer.Run(ctx, "minio/minio:RELEASE.2025-09-07T16-13-09Z", finalCustomizers...)
 	require.NoError(t, err)
 
 	endpoint, err := minioContainer.ConnectionString(ctx)
@@ -44,7 +44,50 @@ func TestImport(t *testing.T) {
 	require.NoError(t, err)
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	// actual test
+	return ctx, madminClient, minioClient, logger, minioContainer
+}
+
+func TestImportWhenNotReady(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip()
+	}
+	ctx, madminClient, minioClient, logger, minioContainer := testSetup(t, testcontainers.WithEntrypoint("sh"), testcontainers.WithCmd("-c", "sleep 110 && minio server /data"))
+	defer func() {
+		err := testcontainers.TerminateContainer(minioContainer)
+		require.NoError(t, err)
+	}()
+	importConfig := ImportConfig{
+		Policies: []policy{
+			{
+				Name: "read-foobar-bucket",
+				Policy: map[string]any{
+					"Version": "2012-10-17",
+					"Statement": []map[string]any{
+						{
+							"Effect": "Allow",
+							"Action": []string{
+								"s3:GetObject",
+							},
+							"Resource": "arn:aws:s3:::foobar/*",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	err := Import(ctx, logger, false, madminClient, minioClient, importConfig)
+	require.NoError(t, err)
+}
+
+func TestImport(t *testing.T) {
+	t.Parallel()
+	ctx, madminClient, minioClient, logger, minioContainer := testSetup(t)
+	defer func() {
+		err := testcontainers.TerminateContainer(minioContainer)
+		require.NoError(t, err)
+	}()
 	const readFoobarBucketPolicyName = "read-foobar-bucket"
 	policiesToImport := []policy{
 		{
