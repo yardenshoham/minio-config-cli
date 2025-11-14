@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/goccy/go-yaml v1.18.0
-	github.com/gruntwork-io/terratest v0.52.0
+	github.com/gruntwork-io/terratest v0.53.0
 	github.com/minio/madmin-go/v4 v4.3.12
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
