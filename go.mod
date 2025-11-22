@@ -1,11 +1,11 @@
 module github.com/yardenshoham/minio-config-cli
 
-go 1.24.2
+go 1.25.4
 
 require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gruntwork-io/terratest v0.53.0
-	github.com/minio/madmin-go/v4 v4.3.12
+	github.com/minio/madmin-go/v4 v4.3.13
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/spf13/cobra v1.10.1
@@ -160,7 +160,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
-	github.com/tinylib/msgp v1.4.0 // indirect
+	github.com/tinylib/msgp v1.5.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/urfave/cli v1.22.16 // indirect
