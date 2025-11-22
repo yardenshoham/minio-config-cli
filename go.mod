@@ -1,6 +1,6 @@
 module github.com/yardenshoham/minio-config-cli
 
-go 1.24.2
+go 1.25.4
 
 require (
 	github.com/goccy/go-yaml v1.18.0
@@ -160,7 +160,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
-	github.com/tinylib/msgp v1.4.0 // indirect
+	github.com/tinylib/msgp v1.5.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/urfave/cli v1.22.16 // indirect
