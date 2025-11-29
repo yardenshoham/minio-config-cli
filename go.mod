@@ -3,7 +3,7 @@ module github.com/yardenshoham/minio-config-cli
 go 1.25.4
 
 require (
-	github.com/goccy/go-yaml v1.18.0
+	github.com/goccy/go-yaml v1.19.0
 	github.com/gruntwork-io/terratest v0.54.0
 	github.com/minio/madmin-go/v4 v4.3.14
 	github.com/minio/minio-go/v7 v7.0.97
