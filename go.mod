@@ -5,7 +5,7 @@ go 1.25.4
 require (
 	github.com/goccy/go-yaml v1.19.0
 	github.com/gruntwork-io/terratest v0.54.0
-	github.com/minio/madmin-go/v4 v4.5.0
+	github.com/minio/madmin-go/v4 v4.10.0
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/spf13/cobra v1.10.2
