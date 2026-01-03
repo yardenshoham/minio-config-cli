@@ -12,10 +12,11 @@ import (
 )
 
 type bucket struct {
-	Name      string         `yaml:"name"`
-	Lifecycle map[string]any `yaml:"lifecycle,omitempty"`
-	Policy    map[string]any `yaml:"policy,omitempty"`
-	Quota     map[string]any `yaml:"quota,omitempty"`
+	Name       string         `yaml:"name"`
+	Lifecycle  map[string]any `yaml:"lifecycle,omitempty"`
+	Policy     map[string]any `yaml:"policy,omitempty"`
+	Quota      map[string]any `yaml:"quota,omitempty"`
+	Versioning map[string]any `yaml:"versioning,omitempty"`
 }
 
 func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, madminClient *madmin.AdminClient, minioClient *minio.Client, buckets []bucket) error {
@@ -90,6 +91,25 @@ func importBuckets(ctx context.Context, logger *slog.Logger, dryRun bool, madmin
 					return fmt.Errorf("failed to set quota for bucket %s: %w", bucket.Name, err)
 				}
 				logger.Info("imported bucket quota", "name", bucket.Name)
+			}
+		}
+		if len(bucket.Versioning) > 0 {
+			logger.Info("importing bucket versioning", "name", bucket.Name)
+			versioningConfig := minio.BucketVersioningConfiguration{}
+			asJSON, err := json.Marshal(bucket.Versioning)
+			if err != nil {
+				return fmt.Errorf("failed to marshal versioning configuration for bucket %s: %w", bucket.Name, err)
+			}
+			err = json.Unmarshal(asJSON, &versioningConfig)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal versioning configuration for bucket %s: %w", bucket.Name, err)
+			}
+			if !dryRun {
+				err = minioClient.SetBucketVersioning(ctx, bucket.Name, versioningConfig)
+				if err != nil {
+					return fmt.Errorf("failed to set versioning configuration for bucket %s: %w", bucket.Name, err)
+				}
+				logger.Info("imported bucket versioning", "name", bucket.Name)
 			}
 		}
 	}

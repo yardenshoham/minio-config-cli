@@ -450,6 +450,50 @@
                 ]
               }
             ]
+          },
+          "versioning": {
+            "type": "object",
+            "description": "Bucket versioning configuration",
+            "properties": {
+              "Status": {
+                "type": "string",
+                "enum": [
+                  "Enabled",
+                  "Suspended"
+                ],
+                "description": "Versioning status for the bucket"
+              },
+              "MFADelete": {
+                "type": "string",
+                "enum": [
+                  "Enabled",
+                  "Disabled"
+                ],
+                "description": "MFA Delete status (optional)"
+              },
+              "ExcludedPrefixes": {
+                "type": "array",
+                "description": "Prefixes excluded from versioning",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "Prefix": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "Prefix"
+                  ]
+                }
+              },
+              "ExcludeFolders": {
+                "type": "boolean",
+                "description": "Exclude folders from versioning"
+              }
+            },
+            "required": [
+              "Status"
+            ]
           }
         },
         "required": [

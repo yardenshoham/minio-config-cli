@@ -66,7 +66,8 @@ buckets:
           Expiration:
             Days: 14
   - name: admin-reports
-    size: 10737418240 # 10Gi
+    quota:
+      size: 10737418240 # 10Gi
   - name: static-assets-public
     policy:
       Version: "2012-10-17"
@@ -79,6 +80,16 @@ buckets:
           Principal:
             AWS:
               - "*"
+  - name: versioned-bucket
+    versioning:
+      Status: Enabled # Enable bucket versioning
+  - name: versioned-with-exclusions
+    versioning:
+      Status: Enabled
+      ExcludedPrefixes: # Exclude specific prefixes from versioning
+        - Prefix: "logs/"
+        - Prefix: "tmp/"
+      ExcludeFolders: true # Exclude folders from versioning
 ```
 
 We provide a JSON schema file for correct creation of the config file. The

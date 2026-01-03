@@ -47,3 +47,6 @@ buckets:
           Principal:
             AWS:
               - "*"
+  - name: versioned-bucket
+    versioning:
+      Status: Enabled
