@@ -152,6 +152,12 @@ func TestImport(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "versioned-bucket",
+			Versioning: map[string]any{
+				"Status": "Enabled",
+			},
+		},
 	}
 	importConfig := ImportConfig{
 		Users:    usersToImport,
@@ -215,6 +221,10 @@ func TestImport(t *testing.T) {
 
 		_, err = minioClient.GetBucketPolicy(ctx, bucketsToImport[0].Name)
 		require.NoError(t, err)
+
+		versioningConfig, err := minioClient.GetBucketVersioning(ctx, bucketsToImport[1].Name)
+		require.NoError(t, err)
+		require.True(t, versioningConfig.Enabled())
 
 		policies, err = madminClient.ListCannedPolicies(ctx)
 		require.NoError(t, err)
