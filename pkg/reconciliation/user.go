@@ -69,7 +69,7 @@ func attachUserPolicies(ctx context.Context, logger *slog.Logger, dryRun bool, c
 			panic("queried user's " + user.AccessKey + " policies but got user " + policyUserMapping.User)
 		}
 		for _, attachedPolicy := range policyUserMapping.Policies {
-			logger.Info("user %s already has policy %s attached", user.AccessKey, attachedPolicy)
+			logger.Info("user already has policy attached", "accessKey", user.AccessKey, "policy", attachedPolicy)
 			delete(policiesToAttachMap, attachedPolicy)
 		}
 	}
