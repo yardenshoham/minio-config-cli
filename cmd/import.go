@@ -70,8 +70,8 @@ func newImportCmd() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to open file %s: %w", path, err)
 				}
-				defer file.Close()
 				config, err := reconciliation.LoadConfig(file)
+				file.Close()
 				if err != nil {
 					return fmt.Errorf("failed to load config from file %s: %w", path, err)
 				}
