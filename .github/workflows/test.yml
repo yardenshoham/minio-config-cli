@@ -12,10 +12,10 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: Install dependencies
-        run: go get .
       - name: Make sure we don't need go mod tidy
         run: go mod tidy -diff
+      - name: Run govulncheck
+        run: go tool govulncheck ./...
       - name: Test
         run: go test -v -coverprofile=coverage.txt ./...
       - name: Upload coverage reports to Codecov
