@@ -1,0 +1,84 @@
+{
+  "realm": "minio",
+  "enabled": true,
+  "accessTokenLifespan": 300,
+  "sslRequired": "none",
+  "clientScopes": [
+    {
+      "name": "minio",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true" },
+      "protocolMappers": [
+        {
+          "name": "minio-sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-sub-mapper",
+          "config": {
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "minio-policy",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "minioPolicy",
+            "claim.name": "policy",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "minio-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "minio-client",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "minio-client",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "test-client-secret",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "defaultClientScopes": ["minio"]
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-minio-client",
+      "enabled": true,
+      "serviceAccountClientId": "minio-client",
+      "attributes": { "minioPolicy": ["consoleAdmin"] }
+    },
+    {
+      "username": "testuser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "testuser@example.com",
+      "requiredActions": [],
+      "credentials": [
+        { "type": "password", "value": "testpassword", "temporary": false }
+      ],
+      "attributes": { "minioPolicy": ["consoleAdmin"] }
+    }
+  ]
+}

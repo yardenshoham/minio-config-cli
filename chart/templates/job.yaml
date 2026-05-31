@@ -47,11 +47,45 @@ spec:
           args:
             - import
             - {{ required "A MinIO URL is required" .Values.url | quote }}
-            - {{ required "A MinIO access key is required" .Values.accessKey | quote }}
-            - {{ required "A MinIO secret key is required" .Values.secretKey | quote }}
             - --import-file-location=/configs
           {{- end }}
           env:
+            {{- if .Values.accessKey }}
+            - name: MINIO_ACCESS_KEY
+              value: {{ .Values.accessKey | quote }}
+            {{- end }}
+            {{- if .Values.secretKey }}
+            - name: MINIO_SECRET_KEY
+              value: {{ .Values.secretKey | quote }}
+            {{- end }}
+            {{- if .Values.oidcIssuerUrl }}
+            - name: OIDC_ISSUER_URL
+              value: {{ .Values.oidcIssuerUrl | quote }}
+            {{- end }}
+            {{- if .Values.oidcClientId }}
+            - name: OIDC_CLIENT_ID
+              value: {{ .Values.oidcClientId | quote }}
+            {{- end }}
+            {{- if .Values.oidcClientSecret }}
+            - name: OIDC_CLIENT_SECRET
+              value: {{ .Values.oidcClientSecret | quote }}
+            {{- end }}
+            {{- if .Values.oidcExtraScopes }}
+            - name: OIDC_EXTRA_SCOPES
+              value: {{ join "," .Values.oidcExtraScopes | quote }}
+            {{- end }}
+            {{- if .Values.grantType }}
+            - name: OIDC_GRANT_TYPE
+              value: {{ .Values.grantType | quote }}
+            {{- end }}
+            {{- if .Values.username }}
+            - name: OIDC_USERNAME
+              value: {{ .Values.username | quote }}
+            {{- end }}
+            {{- if .Values.password }}
+            - name: OIDC_PASSWORD
+              value: {{ .Values.password | quote }}
+            {{- end }}
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}

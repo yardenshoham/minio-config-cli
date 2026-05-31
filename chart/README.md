@@ -44,6 +44,17 @@ extraEnvVars:
 
 Alternatively, you can use a ConfigMap or a Secret with the environment variables. To do so, use the `extraEnvVarsCM` or the `extraEnvVarsSecret` values.
 
+### Authentication
+
+Two mutually-exclusive modes are supported:
+
+- **Static**: set `accessKey` and `secretKey`.
+- **OIDC** (AssumeRoleWithWebIdentity): set `oidcIssuerUrl`, `oidcClientId`, and one of:
+  - `oidcClientSecret` (client-credentials grant), or
+  - `username` + `password` (password grant), optionally with `oidcClientSecret` for confidential clients.
+
+For production, place sensitive values (`secretKey`, `oidcClientSecret`, `password`) in a `Secret` and reference it via `extraEnvVarsSecret` rather than inlining them in `values.yaml`.
+
 ### Sidecars
 
 If additional init containers are needed in the same pod, they can be defined using the `initContainers` parameter. Here is an example:
@@ -65,8 +76,15 @@ Learn more about [init containers](https://kubernetes.io/docs/concepts/workloads
 | `global.imagePullSecrets`                           | Global Docker registry secret names as an array                                             | `[]`             |
 | `useHooks`                                          | Use Helm hooks to install the job                                                           | `false`          |
 | `url`                                               | MinIO URL                                                                                   | REQUIRED         |
-| `accessKey`                                         | MinIO access key                                                                            | REQUIRED         |
-| `secretKey`                                         | MinIO secret key                                                                            | REQUIRED         |
+| `accessKey`                                         | MinIO access key (static auth; mutually exclusive with OIDC)                                | `null`           |
+| `secretKey`                                         | MinIO secret key (static auth; mutually exclusive with OIDC)                                | `null`           |
+| `oidcIssuerUrl`                                     | OIDC issuer URL, e.g. `https://keycloak.example.com/realms/minio`                           | `null`           |
+| `oidcClientId`                                      | OIDC client ID                                                                              | `null`           |
+| `oidcClientSecret`                                  | OIDC client secret (prefer setting via `extraEnvVarsSecret`)                                | `null`           |
+| `oidcExtraScopes`                                   | Extra OIDC scopes added on top of `openid`                                                  | `[]`             |
+| `grantType`                                         | OIDC grant type: `auto`, `password`, or `client-credentials`                                | `null`           |
+| `username`                                          | Username for the OIDC password grant                                                        | `null`           |
+| `password`                                          | Password for the OIDC password grant (prefer setting via `extraEnvVarsSecret`)              | `null`           |
 | `config`                                            | minio-config-cli config file as a YAML/JSON object                                          | `{}`             |
 | `extraConfig`                                       | Additional optional minio-config-cli config file as a YAML/JSON object                      | `{}`             |
 | `nameOverride`                                      | String to partially override common.names.name                                              | `""`             |

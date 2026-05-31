@@ -1,7 +1,16 @@
 useHooks: false
 url: null
+# Static credentials (leave both null when using OIDC).
 accessKey: null
 secretKey: null
+# OIDC credentials (leave all null when using static).
+oidcIssuerUrl: null
+oidcClientId: null
+oidcClientSecret: null
+oidcExtraScopes: []
+grantType: null
+username: null
+password: null
 config: {}
 extraConfig: {}
 
