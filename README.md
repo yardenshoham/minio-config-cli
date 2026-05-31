@@ -12,9 +12,11 @@ Inspired by
 
 # Usage
 
-```bash
-minio-config-cli import MINIO_URL ACCESS_KEY SECRET_KEY --import-file-location=CONFIG_FILE1 --import-file-location=CONFIG_FILE2
-```
+The `import` subcommand takes the MinIO URL as a positional argument and
+authenticates using either static access-key/secret-key credentials or OIDC
+(AssumeRoleWithWebIdentity).
+
+## Static credentials
 
 Assuming you have a MinIO server running on `http://localhost:9000` with an
 admin access key of `minioadmin`, a secret key of `minioadmin`, and a config
@@ -22,8 +24,30 @@ file at `/tmp/config.yaml`, you can import the config file with the following
 command:
 
 ```bash
-minio-config-cli import http://localhost:9000 minioadmin minioadmin --import-file-location=/tmp/config.yaml
+minio-config-cli import http://localhost:9000 \
+    --access-key=minioadmin --secret-key=minioadmin \
+    --import-file-location=/tmp/config.yaml
 ```
+
+## OIDC credentials
+
+```bash
+minio-config-cli import https://minio.example.com \
+    --oidc-issuer-url=https://keycloak.example.com/realms/minio \
+    --oidc-client-id=minio-client \
+    --oidc-client-secret=$OIDC_CLIENT_SECRET \
+    --import-file-location=/tmp/config.yaml
+```
+
+For a password grant, pass `--username` and `--password`
+instead of `--oidc-client-secret`. The grant is auto-detected from the
+flags but can be forced with `--grant-type=client-credentials` or
+`--grant-type=password`.
+
+All flags fall back to environment variables when unset:
+`MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `OIDC_ISSUER_URL`, `OIDC_CLIENT_ID`,
+`OIDC_CLIENT_SECRET`, `OIDC_EXTRA_SCOPES` (comma-separated), `OIDC_GRANT_TYPE`,
+`OIDC_USERNAME`, `OIDC_PASSWORD`.
 
 # Config Files
 
@@ -125,7 +149,8 @@ docker run --rm -p 9000:9000 -p 9001:9001 minio/minio server /data --console-add
 before performing the following command:
 
 ```bash
-minio-config-cli import http://localhost:9000 minioadmin minioadmin \
+minio-config-cli import http://localhost:9000 \
+    --access-key=minioadmin --secret-key=minioadmin \
     --import-file-location=./testdata/config.yaml
 ```
 
@@ -148,7 +173,8 @@ Available docker tags
 ```shell script
 docker run \
     -v <your config path>:/config \
-    yardenshoham/minio-config-cli:latest import http://host.docker.internal:9000 minioadmin minioadmin \
+    yardenshoham/minio-config-cli:latest import http://host.docker.internal:9000 \
+        --access-key=minioadmin --secret-key=minioadmin \
         --import-file-location=/config/*
 ```
 

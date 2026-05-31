@@ -9,9 +9,11 @@ require (
 	github.com/minio/minio-go/v7 v7.2.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/spf13/cobra v1.10.2
+	github.com/stillya/testcontainers-keycloak v0.3.7
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.42.0
+	golang.org/x/oauth2 v0.30.0
 	k8s.io/api v0.35.4
 )
 
@@ -175,7 +177,6 @@ require (
 	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260421165255-392afab6f40e // indirect

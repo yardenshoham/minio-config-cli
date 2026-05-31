@@ -7,14 +7,18 @@ import (
 	"log/slog"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/minio/madmin-go/v4"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	keycloak "github.com/stillya/testcontainers-keycloak"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	miniotestcontainer "github.com/testcontainers/testcontainers-go/modules/minio"
+	tcnetwork "github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/yardenshoham/minio-config-cli/pkg/auth"
 	"github.com/yardenshoham/minio-config-cli/pkg/validation"
 )
 
@@ -83,11 +87,52 @@ func TestImportWhenNotReady(t *testing.T) {
 
 func TestImport(t *testing.T) {
 	t.Parallel()
-	ctx, madminClient, minioClient, logger, minioContainer := testSetup(t)
-	defer func() {
-		err := testcontainers.TerminateContainer(minioContainer)
+
+	t.Run("static", func(t *testing.T) {
+		t.Parallel()
+		ctx, madminClient, minioClient, logger, minioContainer := testSetup(t)
+		defer func() {
+			err := testcontainers.TerminateContainer(minioContainer)
+			require.NoError(t, err)
+		}()
+		runImportScenario(ctx, t, madminClient, minioClient, logger)
+	})
+
+	kc := setupKeycloak(t)
+	endpoint := kc.startMinIO(t)
+
+	// The two OIDC subtests share the same MinIO: client-credentials drives the
+	// full reconciliation scenario, password only smoke-tests that STS accepts
+	// the JWT minted via the password grant. Running ServerInfo concurrently
+	// with the scenario is safe — it never mutates state.
+	t.Run("oidc/client-credentials", func(t *testing.T) {
+		t.Parallel()
+		ctx, madminClient, minioClient, logger := kc.clientsFor(t, endpoint, auth.Config{
+			OIDCIssuerURL:    kc.issuerURL,
+			OIDCClientID:     "minio-client",
+			OIDCClientSecret: "test-client-secret",
+			GrantType:        auth.GrantClientCredentials,
+		})
+		runImportScenario(ctx, t, madminClient, minioClient, logger)
+	})
+
+	t.Run("oidc/password", func(t *testing.T) {
+		t.Parallel()
+		ctx, madminClient, _, _ := kc.clientsFor(t, endpoint, auth.Config{
+			OIDCIssuerURL:    kc.issuerURL,
+			OIDCClientID:     "minio-client",
+			OIDCClientSecret: "test-client-secret",
+			GrantType:        auth.GrantPassword,
+			Username:         "testuser",
+			Password:         "testpassword",
+		})
+		_, err := madminClient.ServerInfo(ctx)
 		require.NoError(t, err)
-	}()
+	})
+}
+
+func runImportScenario(ctx context.Context, t *testing.T, madminClient *madmin.AdminClient, minioClient *minio.Client, logger *slog.Logger) {
+	t.Helper()
 	const readFoobarBucketPolicyName = "read-foobar-bucket"
 	policiesToImport := []policy{
 		{
@@ -294,4 +339,94 @@ func TestImport(t *testing.T) {
 	}
 	err = Import(ctx, logger, false, madminClient, minioClient, importConfig)
 	require.Error(t, err)
+}
+
+// keycloakEnv holds the shared Keycloak + docker-network handles used by the
+// OIDC subtests of TestImport. Each subtest spins up its own MinIO container
+// so the import-scenario assertions can run against a fresh server.
+type keycloakEnv struct {
+	nw         *testcontainers.DockerNetwork
+	kcTokenURL string // host-mapped, e.g. http://127.0.0.1:54321/realms/minio/protocol/openid-connect/token
+	issuerURL  string // what MinIO trusts: http://keycloak:8080/realms/minio
+}
+
+// setupKeycloak boots a Keycloak container with the test realm imported and
+// a shared docker network. Both are cleaned up via t.Cleanup.
+func setupKeycloak(t *testing.T) *keycloakEnv {
+	t.Helper()
+	ctx := t.Context()
+
+	nw, err := tcnetwork.New(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = nw.Remove(ctx) })
+
+	kc, err := keycloak.Run(ctx, "quay.io/keycloak/keycloak:26.6.2",
+		tcnetwork.WithNetwork([]string{"keycloak"}, nw),
+		testcontainers.WithEnv(map[string]string{
+			"KC_HOSTNAME":        "http://keycloak:8080",
+			"KC_HOSTNAME_STRICT": "false",
+			"KC_HTTP_ENABLED":    "true",
+		}),
+		keycloak.WithRealmImportFile("../../testdata/minio-realm.json"),
+		keycloak.WithAdminUsername("admin"),
+		keycloak.WithAdminPassword("admin"),
+		testcontainers.WithWaitStrategy(
+			wait.ForHTTP("/realms/minio/.well-known/openid-configuration").
+				WithPort("8080/tcp").
+				WithStartupTimeout(3*time.Minute),
+		),
+	)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = testcontainers.TerminateContainer(kc) })
+
+	kcURL, err := kc.GetAuthServerURL(ctx)
+	require.NoError(t, err)
+
+	return &keycloakEnv{
+		nw:         nw,
+		kcTokenURL: kcURL + "/realms/minio/protocol/openid-connect/token",
+		issuerURL:  "http://keycloak:8080/realms/minio",
+	}
+}
+
+// startMinIO launches an OIDC-configured MinIO on the shared docker network
+// and returns its host-mapped endpoint. The container is registered for
+// cleanup against t.
+func (e *keycloakEnv) startMinIO(t *testing.T) string {
+	t.Helper()
+	ctx := t.Context()
+
+	mc, err := miniotestcontainer.Run(ctx, "coollabsio/minio:RELEASE.2025-10-15T17-29-55Z",
+		tcnetwork.WithNetwork(nil, e.nw),
+		testcontainers.WithEnv(map[string]string{
+			"MINIO_IDENTITY_OPENID_CONFIG_URL":    "http://keycloak:8080/realms/minio/.well-known/openid-configuration",
+			"MINIO_IDENTITY_OPENID_CLIENT_ID":     "minio-client",
+			"MINIO_IDENTITY_OPENID_CLIENT_SECRET": "test-client-secret",
+			"MINIO_IDENTITY_OPENID_SCOPES":        "openid,minio",
+		}),
+	)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = testcontainers.TerminateContainer(mc) })
+
+	endpoint, err := mc.ConnectionString(ctx)
+	require.NoError(t, err)
+	return endpoint
+}
+
+// clientsFor builds madmin/minio clients backed by STS web identity
+// credentials minted from cfg, targeting the MinIO at endpoint.
+func (e *keycloakEnv) clientsFor(t *testing.T, endpoint string, cfg auth.Config) (context.Context, *madmin.AdminClient, *minio.Client, *slog.Logger) {
+	t.Helper()
+	ctx := t.Context()
+
+	creds, err := auth.BuildCredentials(ctx, "http://"+endpoint, cfg, auth.WithTokenURL(e.kcTokenURL))
+	require.NoError(t, err)
+
+	madminClient, err := madmin.NewWithOptions(endpoint, &madmin.Options{Secure: false, Creds: creds})
+	require.NoError(t, err)
+	minioClient, err := minio.New(endpoint, &minio.Options{Secure: false, Creds: creds})
+	require.NoError(t, err)
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	return ctx, madminClient, minioClient, logger
 }
