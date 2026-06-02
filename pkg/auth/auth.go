@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -123,7 +124,7 @@ func BuildCredentials(ctx context.Context, stsEndpoint string, cfg Config, opts 
 	if tokenURL == "" {
 		tokenURL, err = discoverTokenEndpoint(ctx, cfg.OIDCIssuerURL)
 		if err != nil {
-			return nil, fmt.Errorf("discover OIDC token endpoint: %w", err)
+			return nil, fmt.Errorf("discover OIDC token endpoint for issuer %q: %w", cfg.OIDCIssuerURL, err)
 		}
 	}
 
@@ -136,7 +137,7 @@ func BuildCredentials(ctx context.Context, stsEndpoint string, cfg Config, opts 
 
 	creds, err := credentials.NewSTSWebIdentity(stsEndpoint, fetchToken)
 	if err != nil {
-		return nil, fmt.Errorf("build STS web identity credentials: %w", err)
+		return nil, fmt.Errorf("build STS web identity credentials for endpoint %q: %w", stsEndpoint, err)
 	}
 	return creds, nil
 }
@@ -203,7 +204,10 @@ func newFetchToken(ctx context.Context, cfg Config, grant, tokenURL string, scop
 			return nil, fmt.Errorf("unsupported grant type %q", grant)
 		}
 		if err != nil {
-			return nil, fmt.Errorf("fetch OIDC token: %w", err)
+			return nil, fmt.Errorf(
+				"fetch OIDC token (grant=%s, token_url=%s, client_id=%s, scopes=%v): %w",
+				grant, tokenURL, cfg.OIDCClientID, scopes, err,
+			)
 		}
 		// Expiry intentionally left at zero: see PLAN §9 finding 2.
 		return &credentials.WebIdentityToken{Token: tok.AccessToken}, nil
@@ -214,22 +218,24 @@ func discoverTokenEndpoint(ctx context.Context, issuer string) (string, error) {
 	discURL := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, discURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("%w: build request: %w", ErrDiscovery, err)
+		return "", fmt.Errorf("%w: build request for %s: %w", ErrDiscovery, discURL, err)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("%w: %w", ErrDiscovery, err)
+		return "", fmt.Errorf("%w: GET %s: %w", ErrDiscovery, discURL, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("%w: status %d", ErrDiscovery, resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("%w: GET %s returned HTTP %d, body: %s",
+			ErrDiscovery, discURL, resp.StatusCode, body)
 	}
 	var d discoveryDocument
 	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
-		return "", fmt.Errorf("%w: decode response: %w", ErrDiscovery, err)
+		return "", fmt.Errorf("%w: decode response from %s: %w", ErrDiscovery, discURL, err)
 	}
 	if d.TokenEndpoint == "" {
-		return "", fmt.Errorf("%w: empty token_endpoint", ErrDiscovery)
+		return "", fmt.Errorf("%w: response from %s has empty token_endpoint", ErrDiscovery, discURL)
 	}
 	return d.TokenEndpoint, nil
 }
