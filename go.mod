@@ -2,6 +2,8 @@ module github.com/yardenshoham/minio-config-cli
 
 go 1.26
 
+toolchain go1.26.4
+
 require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gruntwork-io/terratest v0.56.0

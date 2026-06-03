@@ -11,8 +11,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"golang.org/x/oauth2"
@@ -79,6 +81,7 @@ type Option func(*options)
 
 type options struct {
 	tokenURL string
+	logger   *slog.Logger
 }
 
 // WithTokenURL bypasses OIDC discovery and tells BuildCredentials to POST
@@ -88,6 +91,13 @@ type options struct {
 // unreachable from the caller.
 func WithTokenURL(u string) Option {
 	return func(o *options) { o.tokenURL = u }
+}
+
+// WithLogger sets the logger used to report transient OIDC discovery
+// failures while BuildCredentials waits for the issuer to become reachable.
+// If unset, logs are discarded.
+func WithLogger(l *slog.Logger) Option {
+	return func(o *options) { o.logger = l }
 }
 
 // BuildCredentials returns *credentials.Credentials suitable for both
@@ -119,10 +129,13 @@ func BuildCredentials(ctx context.Context, stsEndpoint string, cfg Config, opts 
 	for _, apply := range opts {
 		apply(&o)
 	}
+	if o.logger == nil {
+		o.logger = slog.New(slog.DiscardHandler)
+	}
 
 	tokenURL := o.tokenURL
 	if tokenURL == "" {
-		tokenURL, err = discoverTokenEndpoint(ctx, cfg.OIDCIssuerURL)
+		tokenURL, err = discoverTokenEndpoint(ctx, o.logger, cfg.OIDCIssuerURL)
 		if err != nil {
 			return nil, fmt.Errorf("discover OIDC token endpoint for issuer %q: %w", cfg.OIDCIssuerURL, err)
 		}
@@ -214,8 +227,31 @@ func newFetchToken(ctx context.Context, cfg Config, grant, tokenURL string, scop
 	}
 }
 
-func discoverTokenEndpoint(ctx context.Context, issuer string) (string, error) {
+// discoverTokenEndpoint resolves the OIDC token endpoint from the issuer's
+// discovery document, retrying every 2 seconds until success or ctx
+// cancellation. This mirrors the MinIO health-wait loop so a cold start
+// where the OIDC issuer is not yet up does not crash the CLI.
+func discoverTokenEndpoint(ctx context.Context, logger *slog.Logger, issuer string) (string, error) {
 	discURL := strings.TrimSuffix(issuer, "/") + "/.well-known/openid-configuration"
+	for {
+		endpoint, err := fetchTokenEndpoint(ctx, discURL)
+		if err == nil {
+			logger.InfoContext(ctx, "OIDC discovery succeeded", "url", discURL)
+			return endpoint, nil
+		}
+		logger.WarnContext(ctx, "OIDC discovery failed, issuer might not be up yet, waiting...",
+			"url", discURL, "error", err)
+		select {
+		case <-ctx.Done():
+			return "", fmt.Errorf("%w: context cancelled while waiting for issuer at %s: %w",
+				ErrDiscovery, discURL, ctx.Err())
+		case <-time.After(2 * time.Second):
+		}
+	}
+}
+
+// fetchTokenEndpoint performs a single OIDC discovery attempt.
+func fetchTokenEndpoint(ctx context.Context, discURL string) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, discURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("%w: build request for %s: %w", ErrDiscovery, discURL, err)
