@@ -49,7 +49,13 @@ minio-config-cli import https://minio.example.com \
 			secure := parsed.Scheme == "https"
 			stsEndpoint := parsed.Scheme + "://" + parsed.Host
 
-			creds, err := auth.BuildCredentials(cmd.Context(), stsEndpoint, cfg)
+			logger := slog.New(slog.NewTextHandler(cmd.OutOrStdout(), nil))
+			if dryRun {
+				logger.Info("running in dry-run mode")
+				logger = logger.With("dry-run", "true")
+			}
+
+			creds, err := auth.BuildCredentials(cmd.Context(), stsEndpoint, cfg, auth.WithLogger(logger))
 			if err != nil {
 				return fmt.Errorf("failed to build credentials: %w", err)
 			}
@@ -66,11 +72,6 @@ minio-config-cli import https://minio.example.com \
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create minio client: %w", err)
-			}
-			logger := slog.New(slog.NewTextHandler(cmd.OutOrStdout(), nil))
-			if dryRun {
-				logger.Info("running in dry-run mode")
-				logger = logger.With("dry-run", "true")
 			}
 			filePaths := []string{}
 			for _, importFileLocation := range importFileLocations {

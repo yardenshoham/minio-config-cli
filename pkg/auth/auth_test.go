@@ -1,11 +1,15 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -172,6 +176,11 @@ func TestDiscoverTokenEndpoint_Error(t *testing.T) {
 	t.Parallel()
 	srv := httptest.NewServer(http.HandlerFunc(http.NotFound))
 	t.Cleanup(srv.Close)
-	_, err := discoverTokenEndpoint(t.Context(), srv.URL)
+	// Discovery retries until ctx cancellation; bound it with a short
+	// deadline so the test fails fast if retry stops respecting ctx.
+	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	defer cancel()
+	_, err := discoverTokenEndpoint(ctx, slog.New(slog.NewTextHandler(io.Discard, nil)), srv.URL)
 	require.ErrorIs(t, err, ErrDiscovery)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
