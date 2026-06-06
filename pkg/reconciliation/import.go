@@ -11,6 +11,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/minio/madmin-go/v4"
 	"github.com/minio/minio-go/v7"
+	"github.com/yardenshoham/minio-config-cli/pkg/substitution"
 	"github.com/yardenshoham/minio-config-cli/pkg/validation"
 )
 
@@ -21,18 +22,22 @@ type ImportConfig struct {
 }
 
 // LoadConfig loads the config file into a struct.
-func LoadConfig(r io.Reader) (*ImportConfig, error) {
+func LoadConfig(ctx context.Context, r io.Reader) (*ImportConfig, error) {
 	var readerText bytes.Buffer
 	_, err := io.Copy(&readerText, r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
-	err = validation.ValidateConfig(bytes.NewReader(readerText.Bytes()))
+	substituted, err := substitution.Substitute(ctx, readerText.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to substitute variables in config: %w", err)
+	}
+	err = validation.ValidateConfig(bytes.NewReader(substituted))
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate config: %w", err)
 	}
 	config := &ImportConfig{}
-	err = yaml.Unmarshal(readerText.Bytes(), config)
+	err = yaml.Unmarshal(substituted, config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}

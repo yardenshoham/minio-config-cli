@@ -124,6 +124,57 @@ As a URL:
 https://raw.githubusercontent.com/yardenshoham/minio-config-cli/refs/heads/main/pkg/validation/schema.json
 ```
 
+# Variable Substitution
+
+Config files support variable substitution using the syntax `$(prefix:key)`.
+Substitution is always enabled and is applied to the raw config text before
+validation and unmarshaling.
+
+## Syntax
+
+```
+$(prefix:key)
+```
+
+Expressions are resolved inside-out, so nesting is supported:
+
+```
+$(file:$(env:CONFIG_PATH))
+```
+
+To include a literal `$(prefix:key)` string without substitution, escape it with
+a double `$`:
+
+```
+$$(env:HOME)  →  $(env:HOME)
+```
+
+## Supported Prefixes
+
+| Prefix          | Description                                    | Example                                                  |
+| --------------- | ---------------------------------------------- | -------------------------------------------------------- |
+| `env`           | Value of an environment variable               | `$(env:HOME)` → `/home/user`                             |
+| `file`          | Contents of a file (relative to working dir)   | `$(file:secrets/key.txt)` → file contents                |
+| `base64Decoder` | Decode a Base64 string                         | `$(base64Decoder:SGVsbG8=)` → `Hello`                    |
+| `base64Encoder` | Encode a string to Base64                      | `$(base64Encoder:Hello)` → `SGVsbG8=`                    |
+| `urlDecoder`    | URL-decode a string                            | `$(urlDecoder:Hello%20World)` → `Hello World`            |
+| `urlEncoder`    | URL-encode a string                            | `$(urlEncoder:Hello World)` → `Hello+World`              |
+| `url`           | Fetch content from an HTTP, HTTPS, or file URL | `$(url:https://example.com/policy.json)` → response body |
+
+## Example
+
+```yaml
+buckets:
+  - name: $(env:BUCKET_NAME)
+users:
+  - accessKey: $(env:MINIO_ACCESS_KEY)
+    secretKey: $(file:secrets/minio-secret-key.txt)
+    status: enabled
+policies:
+  - name: my-policy
+    policy: $(url:https://example.com/policy.json)
+```
+
 # Build this project
 
 ```bash
