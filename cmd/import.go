@@ -94,7 +94,7 @@ minio-config-cli import https://minio.example.com \
 				if err != nil {
 					return fmt.Errorf("failed to open file %s: %w", path, err)
 				}
-				config, err := reconciliation.LoadConfig(file)
+				config, err := reconciliation.LoadConfig(ctx, file)
 				file.Close()
 				if err != nil {
 					return fmt.Errorf("failed to load config from file %s: %w", path, err)

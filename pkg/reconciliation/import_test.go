@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -290,7 +291,7 @@ func runImportScenario(ctx context.Context, t *testing.T, madminClient *madmin.A
 	require.NoError(t, err)
 	defer testdataConfigFile.Close()
 
-	testdataConfig, err := LoadConfig(testdataConfigFile)
+	testdataConfig, err := LoadConfig(ctx, testdataConfigFile)
 	require.NoError(t, err)
 	err = Import(ctx, logger, false, madminClient, minioClient, *testdataConfig)
 	require.NoError(t, err)
@@ -429,4 +430,13 @@ func (e *keycloakEnv) clientsFor(t *testing.T, endpoint string, cfg auth.Config)
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	return ctx, madminClient, minioClient, logger
+}
+
+func TestLoadConfigVariableSubstitution(t *testing.T) {
+	t.Setenv("_TEST_LOADCONFIG_BUCKET", "substituted-bucket")
+
+	cfg, err := LoadConfig(t.Context(), strings.NewReader("buckets:\n  - name: $(env:_TEST_LOADCONFIG_BUCKET)\n"))
+	require.NoError(t, err)
+	require.Len(t, cfg.Buckets, 1)
+	require.Equal(t, "substituted-bucket", cfg.Buckets[0].Name)
 }
