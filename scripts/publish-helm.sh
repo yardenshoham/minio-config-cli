@@ -2,7 +2,7 @@
 
 set -ex
 
-# This script is used to publish the helm chart to the yardenshohamcharts repo
+# This script is used to publish the helm chart to the $DOCKERHUB_CHARTS_USERNAME repo
 # It requires the following environment variables to be set:
 #   - DOCKERHUB_CHARTS_USERNAME
 #   - DOCKERHUB_CHARTS_TOKEN
@@ -31,5 +31,5 @@ helm registry login registry-1.docker.io -u $DOCKERHUB_CHARTS_USERNAME -p $DOCKE
 echo "Packaging helm chart"
 helm package chart --version $VERSION --app-version $VERSION --dependency-update
 
-echo "Pushing helm chart to yardenshohamcharts repo"
-helm push minio-config-cli-$VERSION.tgz oci://registry-1.docker.io/yardenshohamcharts
+echo "Pushing helm chart to $DOCKERHUB_CHARTS_USERNAME repo"
+helm push minio-config-cli-$VERSION.tgz oci://registry-1.docker.io/$DOCKERHUB_CHARTS_USERNAME
