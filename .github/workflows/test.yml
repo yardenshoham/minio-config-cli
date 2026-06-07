@@ -17,9 +17,4 @@ jobs:
       - name: Run govulncheck
         run: go tool govulncheck ./...
       - name: Test
-        run: go test -v -coverprofile=coverage.txt ./...
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v6
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: yardenshoham/minio-config-cli
+        run: go test -v ./...
