@@ -159,7 +159,7 @@ $$(env:HOME)  →  $(env:HOME)
 | Prefix          | Description                                    | Example                                                  |
 | --------------- | ---------------------------------------------- | -------------------------------------------------------- |
 | `env`           | Value of an environment variable               | `$(env:HOME)` → `/home/user`                             |
-| `file`          | Contents of a file (relative to working dir), with the trailing newline trimmed | `$(file:secrets/key.txt)` → file contents |
+| `file`          | Contents of a file (relative to working dir), with surrounding whitespace trimmed | `$(file:secrets/key.txt)` → file contents |
 | `base64Decoder` | Decode a Base64 string                         | `$(base64Decoder:SGVsbG8=)` → `Hello`                    |
 | `base64Encoder` | Encode a string to Base64                      | `$(base64Encoder:Hello)` → `SGVsbG8=`                    |
 | `urlDecoder`    | URL-decode a string                            | `$(urlDecoder:Hello%20World)` → `Hello World`            |
