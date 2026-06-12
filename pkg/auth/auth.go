@@ -222,7 +222,8 @@ func newFetchToken(ctx context.Context, cfg Config, grant, tokenURL string, scop
 				grant, tokenURL, cfg.OIDCClientID, scopes, err,
 			)
 		}
-		// Expiry intentionally left at zero: see PLAN §9 finding 2.
+		// Expiry intentionally left at zero: the STS response determines
+		// the credential lifetime.
 		return &credentials.WebIdentityToken{Token: tok.AccessToken}, nil
 	}
 }

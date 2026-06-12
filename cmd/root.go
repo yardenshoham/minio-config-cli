@@ -9,8 +9,10 @@ import (
 
 func newRootCmd() *cobra.Command {
 	var rootCmd = &cobra.Command{
-		Use:   "minio-config-cli",
-		Short: "The minio-config-cli is a CLI tool for declaratively managing minio configurations",
+		Use:           "minio-config-cli",
+		Short:         "The minio-config-cli is a CLI tool for declaratively managing minio configurations",
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
 	return rootCmd
 }

@@ -1,11 +1,13 @@
 package substitution
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -142,5 +144,32 @@ func TestSubstitute(t *testing.T) {
 		result, err := Substitute(t.Context(), []byte("buckets:\n  - name: $(env:_TEST_YAML_BUCKET)\n"))
 		require.NoError(t, err)
 		require.Equal(t, "buckets:\n  - name: my-bucket\n", string(result))
+	})
+
+	// The pass limit bounds nesting depth, not the total number of variables,
+	// so a config with many flat variables must not trip it.
+	t.Run("more variables than the depth limit", func(t *testing.T) {
+		t.Setenv("_TEST_MANY_VARS", "x")
+		input := bytes.Repeat([]byte("$(env:_TEST_MANY_VARS) "), 100)
+		result, err := Substitute(t.Context(), input)
+		require.NoError(t, err)
+		require.Equal(t, strings.Repeat("x ", 100), string(result))
+	})
+
+	t.Run("nesting depth limit", func(t *testing.T) {
+		t.Parallel()
+		input := strings.Repeat("$(base64Encoder:", 51) + "x" + strings.Repeat(")", 51)
+		_, err := Substitute(t.Context(), []byte(input))
+		require.ErrorContains(t, err, "maximum nesting depth")
+	})
+
+	t.Run("file/trailing whitespace trimmed", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "secret.txt")
+		require.NoError(t, os.WriteFile(filePath, []byte("supersecret\n"), 0600))
+		result, err := Substitute(t.Context(), fmt.Appendf(nil, "$(file:%s)", filePath))
+		require.NoError(t, err)
+		require.Equal(t, "supersecret", string(result))
 	})
 }

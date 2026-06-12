@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"io/fs"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -110,6 +112,60 @@ func TestImportCmd(t *testing.T) {
 			require.Error(t, importCmd.Execute())
 		})
 	}
+}
+
+func TestCollectConfigFiles(t *testing.T) {
+	t.Parallel()
+
+	t.Run("regular file", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		path := filepath.Join(dir, "config.yaml")
+		require.NoError(t, os.WriteFile(path, []byte("{}"), 0600))
+		files, err := collectConfigFiles([]string{path})
+		require.NoError(t, err)
+		require.Equal(t, []string{path}, files)
+	})
+
+	t.Run("symlinked file", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		target := filepath.Join(dir, "real.yaml")
+		require.NoError(t, os.WriteFile(target, []byte("{}"), 0600))
+		link := filepath.Join(dir, "link.yaml")
+		require.NoError(t, os.Symlink(target, link))
+		files, err := collectConfigFiles([]string{link})
+		require.NoError(t, err)
+		require.Equal(t, []string{target}, files)
+	})
+
+	// Kubernetes ConfigMap/Secret mounts expose each file as a symlink into
+	// a hidden ..data directory. The walk must import each file exactly once.
+	t.Run("configmap-style mount", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		dataDir := filepath.Join(dir, "..2026_06_12_00_00_00.123")
+		require.NoError(t, os.Mkdir(dataDir, 0700))
+		require.NoError(t, os.WriteFile(filepath.Join(dataDir, "config.yaml"), []byte("{}"), 0600))
+		require.NoError(t, os.Symlink(dataDir, filepath.Join(dir, "..data")))
+		require.NoError(t, os.Symlink(filepath.Join("..data", "config.yaml"), filepath.Join(dir, "config.yaml")))
+		files, err := collectConfigFiles([]string{dir})
+		require.NoError(t, err)
+		require.Equal(t, []string{filepath.Join(dir, "config.yaml")}, files)
+	})
+
+	t.Run("no files found", func(t *testing.T) {
+		t.Parallel()
+		dir := t.TempDir()
+		_, err := collectConfigFiles([]string{dir})
+		require.ErrorContains(t, err, "no config files found")
+	})
+
+	t.Run("missing location", func(t *testing.T) {
+		t.Parallel()
+		_, err := collectConfigFiles([]string{filepath.Join(t.TempDir(), "missing.yaml")})
+		require.ErrorIs(t, err, fs.ErrNotExist)
+	})
 }
 
 // TestImportCmd_EnvVarFallback verifies that MINIO_ACCESS_KEY and

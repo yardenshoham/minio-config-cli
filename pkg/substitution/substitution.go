@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"slices"
 )
 
 // innermostPattern matches $(prefix:key) where the value contains no $, (, or ).
@@ -56,28 +55,39 @@ func Substitute(ctx context.Context, input []byte, opts ...Option) ([]byte, erro
 }
 
 func (s *substituter) substitute(ctx context.Context, input []byte) ([]byte, error) {
-	const maxIterations = 50
+	// maxDepth bounds the number of passes, i.e. the nesting depth of
+	// expressions. Each pass resolves every innermost variable in the input,
+	// so the number of variables in a config is unbounded.
+	const maxDepth = 50
 	registry := s.buildRegistry()
 
 	// Replace $$( escape sequences with a placeholder to protect them from substitution.
 	working := bytes.ReplaceAll(input, escapePrefix, escapePlaceholder)
 
-	for range maxIterations {
-		match := innermostPattern.FindSubmatchIndex(working)
-		if match == nil {
+	for range maxDepth {
+		matches := innermostPattern.FindAllSubmatchIndex(working, -1)
+		if matches == nil {
 			break
 		}
-		inner := working[match[2]:match[3]]
-		resolved, err := s.resolve(ctx, inner, registry)
-		if err != nil {
-			return nil, fmt.Errorf("failed to substitute variable %q: %w", string(inner), err)
+		var result bytes.Buffer
+		last := 0
+		for _, match := range matches {
+			inner := working[match[2]:match[3]]
+			resolved, err := s.resolve(ctx, inner, registry)
+			if err != nil {
+				return nil, fmt.Errorf("failed to substitute variable %q: %w", string(inner), err)
+			}
+			result.Write(working[last:match[0]])
+			result.Write(resolved)
+			last = match[1]
 		}
-		working = slices.Concat(working[:match[0]], resolved, working[match[1]:])
+		result.Write(working[last:])
+		working = result.Bytes()
 	}
 
-	// If patterns remain after reaching the iteration limit, report an error.
+	// If patterns remain after reaching the depth limit, report an error.
 	if innermostPattern.Match(working) {
-		return nil, fmt.Errorf("failed to substitute variables: maximum iteration limit reached, possible circular reference")
+		return nil, fmt.Errorf("failed to substitute variables: maximum nesting depth reached, possible circular reference")
 	}
 
 	// Restore escaped sequences to their literal form.

@@ -12,6 +12,11 @@ import (
 // ErrUnsupportedURLScheme is returned by the url lookup when the URL uses a scheme other than http, https, or file.
 var ErrUnsupportedURLScheme = errors.New("unsupported URL scheme")
 
+// maxResponseSize caps how much of an HTTP response body the url lookup
+// reads, so a misbehaving endpoint cannot exhaust memory. Far larger than
+// any sane config fragment.
+const maxResponseSize = 100 << 20 // 100 MiB
+
 type urlContentLookup struct {
 	httpClient *http.Client
 }
@@ -46,9 +51,12 @@ func (l *urlContentLookup) fetchHTTP(ctx context.Context, rawURL string) ([]byte
 		return nil, fmt.Errorf("failed to fetch URL %q: HTTP status %d", rawURL, resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize+1))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response from URL %q: %w", rawURL, err)
+	}
+	if len(body) > maxResponseSize {
+		return nil, fmt.Errorf("failed to read response from URL %q: body exceeds %d bytes", rawURL, maxResponseSize)
 	}
 	return body, nil
 }
