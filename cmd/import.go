@@ -73,20 +73,9 @@ minio-config-cli import https://minio.example.com \
 			if err != nil {
 				return fmt.Errorf("failed to create minio client: %w", err)
 			}
-			filePaths := []string{}
-			for _, importFileLocation := range importFileLocations {
-				err := filepath.WalkDir(importFileLocation, func(path string, d fs.DirEntry, err error) error {
-					if err != nil {
-						return err
-					}
-					if d.Type().IsRegular() {
-						filePaths = append(filePaths, path)
-					}
-					return nil
-				})
-				if err != nil {
-					return fmt.Errorf("failed to walk import file locations: %w", err)
-				}
+			filePaths, err := collectConfigFiles(importFileLocations)
+			if err != nil {
+				return err
 			}
 			ctx := cmd.Context()
 			for _, path := range filePaths {
@@ -135,6 +124,54 @@ minio-config-cli import https://minio.example.com \
 	// MarkFlagsMutuallyExclusive cannot see.
 
 	return importCmd
+}
+
+// collectConfigFiles walks each location and returns the config files found.
+// Symlinks are followed, both as the location itself (e.g. a Kubernetes
+// ConfigMap/Secret mount, where every file is a symlink) and as entries inside
+// a walked directory. Hidden files and directories are skipped so the
+// ..data/..<timestamp> internals of such mounts are not imported twice.
+// Finding no files at all is an error rather than a silent no-op.
+func collectConfigFiles(locations []string) ([]string, error) {
+	filePaths := []string{}
+	for _, location := range locations {
+		// Resolve a symlinked location so WalkDir can descend into it.
+		resolved, err := filepath.EvalSymlinks(location)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve import file location %s: %w", location, err)
+		}
+		err = filepath.WalkDir(resolved, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			hidden := path != resolved && strings.HasPrefix(d.Name(), ".")
+			if d.IsDir() {
+				if hidden {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if hidden {
+				return nil
+			}
+			// Stat (not Lstat) so symlinked entries resolve to their targets.
+			info, err := os.Stat(path)
+			if err != nil {
+				return err
+			}
+			if info.Mode().IsRegular() {
+				filePaths = append(filePaths, path)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to walk import file locations: %w", err)
+		}
+	}
+	if len(filePaths) == 0 {
+		return nil, fmt.Errorf("no config files found in %s", strings.Join(locations, ", "))
+	}
+	return filePaths, nil
 }
 
 // applyEnvFallback fills empty fields of cfg from environment variables.

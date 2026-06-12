@@ -8,7 +8,12 @@ inside git just like normal code. A MinIO restart isn't required to apply the
 configuration.
 
 Inspired by
-[keycloak-config-cli](https://github.com/yardenshoham/minio-config-cli).
+[keycloak-config-cli](https://github.com/adorsys/keycloak-config-cli).
+
+minio-config-cli is additive only: it creates and updates the resources listed
+in the config file, but never deletes or detaches anything. Resources removed
+from the config file (or policies removed from a user's `policies` list) are
+left untouched on the server and must be cleaned up manually.
 
 # Usage
 
@@ -154,7 +159,7 @@ $$(env:HOME)  →  $(env:HOME)
 | Prefix          | Description                                    | Example                                                  |
 | --------------- | ---------------------------------------------- | -------------------------------------------------------- |
 | `env`           | Value of an environment variable               | `$(env:HOME)` → `/home/user`                             |
-| `file`          | Contents of a file (relative to working dir)   | `$(file:secrets/key.txt)` → file contents                |
+| `file`          | Contents of a file (relative to working dir), with surrounding whitespace trimmed | `$(file:secrets/key.txt)` → file contents |
 | `base64Decoder` | Decode a Base64 string                         | `$(base64Decoder:SGVsbG8=)` → `Hello`                    |
 | `base64Encoder` | Encode a string to Base64                      | `$(base64Encoder:Hello)` → `SGVsbG8=`                    |
 | `urlDecoder`    | URL-decode a string                            | `$(urlDecoder:Hello%20World)` → `Hello World`            |
@@ -226,7 +231,7 @@ docker run \
     -v <your config path>:/config \
     yardenshoham/minio-config-cli:latest import http://host.docker.internal:9000 \
         --access-key=minioadmin --secret-key=minioadmin \
-        --import-file-location=/config/*
+        --import-file-location=/config
 ```
 
 ### Docker build

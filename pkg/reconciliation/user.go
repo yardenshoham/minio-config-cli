@@ -66,7 +66,7 @@ func attachUserPolicies(ctx context.Context, logger *slog.Logger, dryRun bool, c
 	}
 	for _, policyUserMapping := range policyEntities.UserMappings {
 		if policyUserMapping.User != user.AccessKey {
-			panic("queried user's " + user.AccessKey + " policies but got user " + policyUserMapping.User)
+			return fmt.Errorf("queried policies of user %s but server returned user %s", user.AccessKey, policyUserMapping.User)
 		}
 		for _, attachedPolicy := range policyUserMapping.Policies {
 			logger.Info("user already has policy attached", "accessKey", user.AccessKey, "policy", attachedPolicy)
