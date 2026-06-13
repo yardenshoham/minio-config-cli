@@ -34,7 +34,7 @@ func chartPath(t *testing.T) string {
 func renderJob(t *testing.T, values, strValues map[string]string) batchv1.Job {
 	t.Helper()
 	options := &helm.Options{SetValues: values, SetStrValues: strValues}
-	output := helm.RenderTemplate(t, options, chartPath(t), releaseName, []string{"templates/job.yaml"})
+	output := helm.RenderTemplateContext(t, t.Context(), options, chartPath(t), releaseName, []string{"templates/job.yaml"})
 	var job batchv1.Job
 	helm.UnmarshalK8SYaml(t, output, &job)
 	return job
@@ -77,7 +77,7 @@ func TestHelmChartTemplateRequiredValues(t *testing.T) {
 			subT.Parallel()
 
 			options := &helm.Options{SetValues: testCase.values}
-			_, err := helm.RenderTemplateE(subT, options, chartPath(subT), releaseName, []string{})
+			_, err := helm.RenderTemplateContextE(subT, subT.Context(), options, chartPath(subT), releaseName, []string{})
 			require.Error(subT, err)
 		})
 	}
