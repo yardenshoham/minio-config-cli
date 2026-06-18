@@ -43,7 +43,7 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v5.0.0
         with:
-          version: v4.2.1
+          version: v4.2.2
       - name: Publish Helm Chart
         run: |
           ./scripts/publish-helm.sh ${{ github.ref_name }}
