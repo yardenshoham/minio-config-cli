@@ -361,7 +361,7 @@ func setupKeycloak(t *testing.T) *keycloakEnv {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = nw.Remove(ctx) })
 
-	kc, err := keycloak.Run(ctx, "quay.io/keycloak/keycloak:26.6.3",
+	kc, err := keycloak.Run(ctx, "quay.io/keycloak/keycloak:26.6.4",
 		tcnetwork.WithNetwork([]string{"keycloak"}, nw),
 		testcontainers.WithEnv(map[string]string{
 			"KC_HOSTNAME":        "http://keycloak:8080",
