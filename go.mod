@@ -16,7 +16,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.43.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.43.0
 	golang.org/x/oauth2 v0.36.0
-	k8s.io/api v0.35.4
+	k8s.io/api v0.36.2
 )
 
 require (
