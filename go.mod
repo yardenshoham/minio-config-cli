@@ -1,13 +1,13 @@
 module github.com/yardenshoham/minio-config-cli
 
-go 1.26.0
+go 1.26.9
 
 toolchain go1.27.3
 
 require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gruntwork-io/terratest/modules/helm/v2 v2.0.0
-	github.com/minio/madmin-go/v4 v4.10.5
+	github.com/minio/madmin-go/v4 v4.10.6
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/spf13/cobra v1.10.2
