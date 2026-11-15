@@ -11,7 +11,7 @@ require (
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/spf13/cobra v1.10.2
-	github.com/stillya/testcontainers-keycloak v0.3.8
+	github.com/stillya/testcontainers-keycloak v0.3.9
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.45.0
 	github.com/testcontainers/testcontainers-go/modules/minio v0.45.0
