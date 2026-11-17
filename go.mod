@@ -7,7 +7,7 @@ toolchain go1.27.4
 require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gruntwork-io/terratest/modules/helm/v2 v2.0.0
-	github.com/minio/madmin-go/v4 v4.10.7
+	github.com/minio/madmin-go/v4 v4.11.0
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/spf13/cobra v1.10.2
@@ -77,7 +77,7 @@ require (
 	github.com/homeport/dyff v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.19.2 // indirect
+	github.com/klauspost/compress v1.20.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
@@ -89,7 +89,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
-	github.com/minio/minlz v1.2.0 // indirect
+	github.com/minio/minlz v1.2.4 // indirect
 	github.com/minio/pkg/v3 v3.4.0 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/hashstructure v1.1.0 // indirect
